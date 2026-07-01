@@ -28,11 +28,11 @@ This also aligns with recent evidence that retrieval-only pipelines are often in
 This follows the same high-level idea described in Karpathy's LLM Wiki gist: the knowledge base is a compounding artifact, not just a transient retrieval target. Here, that idea is implemented for bounded corpora (previously enterprise-level) with explicit ingestion, deterministic compilation paths, and Azure-oriented runtime patterns.
 
 
-## Human Curation Marker
+## Human Curation Marker 🧠
 In the following repo (not just the README), any section labeled with 🧠 requires human customization for your dataset/domain before production use.
 
 
-## Framework Branding and Philosophy
+## Framework Branding and Philosophy 📜
 > **Retrieval Augmented Semantic Calibrated Active Learning**
 
 This name reflects both the implementation and the philosophy:
@@ -43,7 +43,7 @@ This name reflects both the implementation and the philosophy:
 - **Active Learning:** feedback, triage, and write-back create a compounding loop where the system improves with use.
 
 
-## Calibrated Trust as the Core Principle
+## Calibrated Trust as the Core Principle 🤝
 RASCAL is built around a practical trust posture:
 - Show what the system knows, where it comes from, and how strongly responses are supported.
 - Separate machine-extracted candidates from human-approved knowledge.
@@ -67,7 +67,7 @@ In short: the goal is not maximum autonomy; it is **maximum dependable usefulnes
 
 
 
-## Manifesto!
+## Manifesto! 🤜
 RASCAL is a human-centered knowledge framework designed to support institutional memory, semantic retrieval, and governed knowledge evolution through constrained AI assistance. It is philosophically inspired by emerging LLM Wiki concepts while diverging architecturally from autonomous or heavily generative systems. RASCAL prioritizes provenance, ontology, metadata integrity, graph-based relationships, and human stewardship over unbounded probabilistic synthesis.
 
 At its core, RASCAL treats AI not as an authoritative generator of institutional truth, but as a semantic mediation layer operating over structured, governed knowledge systems. Graph databases, semantic relationships, metadata schemas, taxonomies, and ontologies form the framework's persistent foundation, while natural-language interfaces enable users to interact with complex institutional knowledge in a more accessible and intuitive way. AI assists with retrieval, contextualization, semantic linkage, and relationship discovery, but human validation and stewardship remain critical to system operation and evolution.
@@ -88,7 +88,7 @@ RASCAL does not reject AI, generation, or future agentic systems outright. Inste
 With that philosophy in mind, the next section clarifies explicit boundaries to prevent misuse and expectation drift.
 
 
-## Out of Scope (To Avoid Confusion)
+## Out of Scope (To Avoid Confusion) 😖
 The implementation is intentionally bounded; it is not designed as a general agent framework or a model-agnostic chatbot.
 - No Claude usage: this repo does not use Claude models in pipeline or runtime behavior. When Claude becomes more affordable for organizations and individual users, it may be a consideration for RASCAL.
 - No autonomous multi-agent orchestration: this is a single assistant, pipeline-driven system. The use of agents may be considered later, once the baseline MVP is proven and security concerns are analyzed.
@@ -119,7 +119,7 @@ It is less suited to domains where content is highly fragmented, purely informat
 RASCAL is not intended to replace a full enterprise knowledge platform (not yet). It is a framework for evaluating feasibility and practical utility at a smaller scale ("tribal" or "niche" knowledge).
 
 
-## Intended Audience
+## Intended Audience 🎭
 RASCAL is relevant for "stakeholders" interested in:
 - bounded AI knowledge use cases within a specific team or function
 - improving internal (tribal) knowledge accessibility and discoverability
@@ -154,7 +154,7 @@ Known constraints:
 For this reason, RASCAL should be evaluated as a targeted approach for suitable domains, rather than as a general solution to all knowledge problems.
 
 
-## Domain-driven Design: Build Your Own Taxonomies and Ontologies (or don't)
+## Domain-driven Design: Build Your Own Taxonomies and Ontologies (or don't) 🤷
 **This is a core strength of RASCAL.**
 
 Unlike rigid, top-down knowledge platforms, RASCAL is designed for corpus operators to define their own domain vocabularies… taxonomies, relationship types, concept hierarchies, and metadata schemas… based on the actual data being ingested. **Note:** controlled vocabularies, taxonomies, etc., per domain do exist. Exercise best practices here.
@@ -187,7 +187,42 @@ Even where RASCAL is not feasible for every group, it demonstrates a credible an
 - Approved internal tooling can support supplementation without waiting for platform-level infrastructure.
 This makes RASCAL useful both as a demonstration of what is possible and as a decision tool for identifying whether AI knowledge solutions may be viable for a given team or domain.
 
-## Self-assessment: Is your domain a good fit?
+## Self-assessment: Is your domain a good fit? 🧩
 Before bringing a dataset to RASCAL, use the AI KMS Domain Feasibility Scorecard to independently assess two dimensions:
 - **Value:** How useful would AI-assisted retrieval be for this domain? (e.g., reuse frequency, retrieval pain, decision impact)
 - **Readiness**: How suitable is the current content for AI use without excessive curation/pre-processing? (e.g., structural coherence, semantic clarity, documentation currency)
+
+The SCORECARD.md includes:
+- Five value dimensions to evaluate
+- Five readiness dimensions to evaluate
+- Scoring guidance for each (1-5 scale)
+- Interpretations thresholds
+- A combined assessment matrix
+- Real-world scenario examples
+
+Depending on your scoring, you can assign decision labels:
+- **Direct AI KMS Candidate** - high value + high or moderate readiness, suitable for ingestions with normal preprocessing
+- **AI-Assisted Transformation Candidate** - high value + low readiness, suitable only if AI helps convert messy content into a usable knowledge object first.
+- **Selective Extraction Candidate** - high value + very low readiness: do not ingest broadly; extract only recurring issues, FAQs, procedures, or key patterns.
+- **Not Currently Viable** - low value and/or very low readiness, curation cost likely too high for expected benefit.
+
+What to bring when evaluating your domain:
+- Scope and ownership
+- Content structure
+- Stability
+- Retrieval pain today
+- Consequence of poor access
+- Review appetite
+
+
+## Framework Scope
+RASCAL as a framework intentionally contains:
+- Pipeline and API source code (`backend/`, `frontend/`)
+- Template config (`config/fallback_qa.json`, `config/fallback_templates.json`, `config/source_url_map.json`, the last may not be applicable to your corpus)
+- Metadata taxonomy seed file (`metadata_definitions.json`)
+- Schema placeholder docs (`config/schema/SCHEMA.md`)
+- Empty metadata stubs (`metadata_overrides.json` with "documents":{})
+- Environment template (`.env.example`)
+- Placeholder directories (`raw/.gitkeep`)
+
+RASCAL does not contain source documents, compiled wiki output, or domain-specific fallback answers.
