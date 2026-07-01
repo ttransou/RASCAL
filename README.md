@@ -19,3 +19,52 @@ For teams that need standards-based semantic interoperability, optional SPARQL/o
 **How this differs from traditional RAG:** In a standard RAG setup, the system retrieves chunks from raw files at query time and synthesizes an answer on demand. In this framework, raw files are first transformed into structured artifacts and compiled into a maintained wiki representation. Retrieval and answering happen against that persistent layer, while source documents remain available for traceability.
 
 This also aligns with recent evidence that retrieval-only pipelines are often insufficient for harder domain tasks unless paired with stronger knowledge organization and reasoning structures. (Wang et al., 2025).
+
+**Compounding Loop:** Validated answers can be written back to the wiki, so useful outputs become reusable knowledge pages rather than one-time responses.
+
+> "This is the key difference: the wiki is a persistent, compounding artifact."
+> -- Andrej Karpathy, LLM Wiki (cited in References)
+
+This follows the same high-level idea described in Karpathy's LLM Wiki gist: the knowledge base is a compounding artifact, not just a transient retrieval target. Here, that idea is implemented for bounded corpora (previously enterprise-level) with explicit ingestion, deterministic compilation paths, and Azure-oriented runtime patterns.
+
+
+## Human Curation Marker
+In the following repo (not just the README), any section labeled with 🧠 requires human customization for your dataset/domain before production use.
+
+
+## Framework Branding and Philosophy
+> **Retrieval Augmented Semantic Calibrated Active Learning**
+
+This name reflects both the implementation and the philosophy:
+- **Retrieval:** answers are grounded in bounded corpora, not open-domain speculation
+- **Augmented:** AI amplifies curator judgment; it does not replace accounable human review
+- **Semantic:** knowledge is structured through domain-specific document types, edge types, and metadata.
+- **Calibrated:** trust is earned through traceability, confidence signals, and explicit human-in-the-loop gates.'
+- **Active Learning:** feedback, triage, and write-back create a compounding loop where the system improves with use.
+
+
+## Calibrated Trust as the Core Principle
+RASCAL is built around a practical trust posture:
+- Show what the system knows, where it comes from, and how strongly responses are supported.
+- Separate machine-extracted candidates from human-approved knowledge.
+- Treat curation decisions as first-class system inputs, not post-hoc cleanup.
+- Prefer transparent uncertainty over false confidence.
+This posture aligns with trust-calibration research in AI-assisted decision systems and broader HCI literature on automation trust and miscalibration.
+
+It also aligns with recent Human-Generative AI collaboration framing that defines collaboration as complementary human/AI work under explicit human oversight, where humans retain control of goals and boundaries while AI contributes bounded assistance or iterative support (Le et al., 2025, Sections 3.1.1-3.1.2)
+
+
+
+## Framework Positioning
+RASCAL is not trying to be a general-purpose autonomous agent stack.
+
+It is a domain-grounded knowledge framework where:
+- retrieval is bounded,
+- outputs are reviewable,
+- curation is operationalized,
+- and quality compounds over time and use.
+In short: the goal is not maximum autonomy; it is **maximum dependable usefulness** for real knowledge workflows.
+
+
+
+## Manifesto!
