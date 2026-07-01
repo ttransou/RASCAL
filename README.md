@@ -1,4 +1,4 @@
-# RASCAL
+# RASCAL 🃏
 ### Retrieval Augmented Semantic Calibrated Active Learning
 
 T. Transou - June 2026 - 🚧 Active Development 🚧
