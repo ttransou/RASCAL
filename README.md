@@ -226,3 +226,87 @@ RASCAL as a framework intentionally contains:
 - Placeholder directories (`raw/.gitkeep`)
 
 RASCAL does not contain source documents, compiled wiki output, or domain-specific fallback answers.
+
+
+## Human Curation Layer - The Two Required Files ✌
+RASCAL is entirely automated EXCEPT for two JSON files that require human curation 🧠:
+- `metadata_overrides.json` - enriches extracted metadata (summary, key points, relationships)
+- `config/source_url_map.json` - Maps internal doc IDs to source location by URL and external validation (could be optional)
+🧠 Required before production: complete both files with dataset-specific values and reviewer ownership.
+
+Everything else is automated:
+- Document extraction (`process_raw_sources.py`) → JSON
+- Wiki compilation (`wiki_compiler.py`) → Markddown + index
+- Retrieval, citation, tracing →  API Endpoints
+
+
+## Why Human Curation is Needed (Plain Language)
+Automation gets you speed; 🧠 human curation gives you trust.
+
+RASCAL can extract text, infer links, and build a useable knowledge graph automatically. But in many domains, correctness is not only about syntax. It is about meaning, intent, and sometimes risk. This is why human curation remains essential before treating outputs as trusted knowledge.
+
+In practice, human curation is needed for three reasons:
+- **Meaning accuracy:** extracted links can look reasonable but still be wrong for your domain
+- **Accountability:** someone must own what is approved, rejected, or still provisional
+- **Traceable decisions:** reviewers need to explain why a relationship or summary was accepted.
+
+| Area                                                       | What Humans Decide                                  | Why It Matters                                        |
+| ---------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------- |
+| `metadata_overrides.json` summaries/key points              | Final summary wording and top takeaways             | Prevents misleading or incomplete framing             |
+| Relationship validation (`requires`, `depends_on`, `related_to`) | Whether an extracted relationship is truly valid    | Protect dependency chains from semantic errors        |
+| Confidence and weight promotion                            | Which links deserve high-confidence status          | Separates verified knowledge from provisional signals |
+| Concept naming and synonym merges                          | Canonical terms and merge/split choices             | Avoids ontology drift across teams/doc types          |
+| `config/source_url_map.json` mapping                        | Canonical source-of-truth URLS/documents            | Keeps citations auditable and user-verifiable         |
+| Curator review loop                                        | Which feedback should be written back into the wiki | Prevents low-quality or incorrect write-back          |
+
+**Rule of Thumb**
+- If it changes interpretation, risk, or policy meaning it needs 🧠 human review
+- If it is a mechanical transformation (parse, compile, index, retrieve), automation is sufficient
+
+**Human Curation and Governance Model**
+For teams operationalizing this model, role clarity (owner, reviewer, curator, approver) is not optional; it is the control surface that keeps grounded retrieval from drifting into ungoverned synthesis.
+> "Projects slip not because the model is weak, but because accountability is fuzzy."
+> > *- Megan Leanda Berry, The Human Layer in GraphRAG*
+
+$INSERT MERMAID DIAGRAM$
+
+
+## Metadata Overrides Structure
+See `metadata_overrides.json` for framework-ready example entries covering:
+- unreviewed linkage (provisional strength)
+- document-level HITL reviewed linkage (semantic tier strengths)
+- per-link HITL reviewed override with explicit weight/confidence
+🧠 **Customization point:** replace all example document keys, relationship targets, and confidence semantics with your domain-specific curated values.
+
+```json
+{
+  "documents":{
+    "doc_id_or_title":{
+      "summary":"Human-written summary of this document's purpose and scope.",
+      "key_points":[
+        "Point 1: What users must understand.",
+        "Point 2: Critical rule or constraint.",
+      ],
+      "relationships":[
+      "requires":["ref_to_prerequisite_doc"],
+      "depends_on":["ref_to_parent_policy"],
+      "related_to":["ref_to_sibling_concept"]
+      }
+    }
+  }
+}
+```
+**How to fill it in:**
+- `summary`: 1-3 sentences answering "What does this document do?"
+- `key_points`: Bullet list of 3-5 most important takeaways
+- `relationships.requires`: docs that must be read/understood first
+- `relationships.depends_on`: docs that this one supersedes or refines
+- `relationships.related_to`: docs with tangential relevance
+You can provide relationship links in either form:
+- simple string form (backward compatible):
+  - "requires": ["doc_b", "doc_c"]
+- rich object form (recommended for curation-aware graph edges):
+  - "requires": [{"target":"doc_b","weight":0.95, "confidence": 1.0, "human_reviewed":true, "provenance":"curated"}]
+When object form is used, ingestion preserves link-level metadata on the edge record (weight, confidence, human_reviewed, provenance, optional labels, and dates).
+
+If simple string form is used, RASCAL defaults apply by relationship type:
