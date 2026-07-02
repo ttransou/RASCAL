@@ -387,3 +387,11 @@ Everything else in this section is about adaptation, enrichment, or alternate ru
 
 
 ## Optional Enterprise Customization
+These are the main reuse levers when adapting RASCAL for another business unite, area, corpus, or product surface:
+- taxonomy customization in `metadata_definitions.json`
+- fallback and clarification behavior in `config/fallback_qa.json` and `config/fallback_templates.json`
+- Azure development wiring in `.env`
+- pipeline pathing and mode selection in `backend/run_pipeline.py`
+- UI naming, category mapping, and external links in `frontend/app.js` and `frontend/index.html`
+
+~insert table~
