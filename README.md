@@ -394,4 +394,60 @@ These are the main reuse levers when adapting RASCAL for another business unite,
 - pipeline pathing and mode selection in `backend/run_pipeline.py`
 - UI naming, category mapping, and external links in `frontend/app.js` and `frontend/index.html`
 
-~insert table~
+
+| File/Surface | What it controls | Typical customization |
+| :---- | :---- | :---- |
+| `metadata_definition.json` | Domain-specific taxonomy (document types, relationship/edge-types, term definitions) used throughout the pipeline | This is where you define your domain’s ontology – document types, relationship semantics, edge type registries, weight/confidence defaults, and term definitions for your corpus. Required customization point. |
+| `metadata_overrides.json` | Per-document human curation and default metadata | Add summaries, key points, relationships, and final type overrides |
+| `config/source_url_map.json` | Source-document links used in citations and UI | Point citations to SharePoint, Drive, etc., file portals, or document systems |
+| `config/fallback_qa.json` | Domain-specific canned answers when no grounded wiki answer is available | Add starter FAQ behavior before you corpus is loaded |
+| `config/fallback_templates.json` | Working templates for capability, clarification, and insufficient-context responses | Tune assistant tone and follow-up prompts without editing code |
+| `.env/.env.example` | Azure OpenAI, Cosmos, and ingestion tuning knobs | Set deployments, endpoints, chunk sizing, and semantic break thresholds |
+| `backend/run_pipeline.py` | End-to-end pipeline orchestration | Switch between wiki-first vs. legacy, scaffold vs. LLM, local vs. ingest-enabled runs |
+| `frontend/app.js` \+ `frontend/FRONTEND-README.md` | UI labels, type-to-tab mapping, external files, and catalog behavior | Rebrand the UI, adapt type tabs, and expose richer metadata in the browser |
+
+
+## What Each Surface Actually Does
+**`metadata_definitions.json`**
+- supplies the term definitions consumed by `synth_metadata.py`
+- helps normalize extracted document types before wiki compilation
+- is the right place to adapt RASCAL from policy-style corpora to a different domain taxonomy
+
+**`config/fallback_qa.json` and `config/fallback_templates.json`**
+- `fallback_qa.json` stores explicit fallback answers and clarifying questions
+- `fallback_templates.json` stores reusable output phrasing for capability, clarification, and low-evidence responses
+- These files let you customize assistant behavior safely without editing prompt logic in `graph_api.py/graph_chat.py`
+
+**`.env` runtime controls**
+- Azure chat path: ETC ETC
+- Embedding path: ETC ETC
+- Cloud graph path: ETC ETC
+- Ingestion quality/cost tradeoffs: ETC ETC
+
+**`backend/run_pipeline.py` orchestration switches**
+- `--pipeline-mode wiki-first|legacy`: choose the newer integrated flow or the older multi-step flow
+- `--wiki-mode skip|scaffold|llm`: skip wiki compilation, compile deterministically, or compile with Azure OpenAI assistance
+- `--skip-ingest`: stay local and avoid Cosmos ingestion
+- `health-url`: verify API health after pipeline completion
+- Path flags such as `--raw-dir`, `--output-dir`, `--wiki-root`, and `wiki-dir` make it possible to re-point RASCAL at a different corpus layout with editing code
+
+**Frontend customization**
+- `frontend/app.js` controls type normalization, wiki tab behavior, external links, and model/catalog rendering
+- `frontend/index.html` controls visible branding, labels, and the app shell layout
+- `frontend/FRONTEND-README.md` already documents the UI-specific customization points in more detail
+
+
+## Concept and Metadata Node Framework
+This section defines how to add concept and metadata nodes in a way that is explainable, repeatable, and explicit about where human curation is required.
+
+**Explainable Processing Contract**
+Fro each ingested document, the system should produce a small processing trace:
+- input document id/title
+- extracted concept candidates
+- emitted metadata nodes
+- emitted edges (`mentions`, `defines`, `has_metadata`, etc.)
+- curation status (`auto`, `reviewed`, `rejected`)
+This keeps graph expansion auditable and helps reviewers understand why a node or edge exists.
+
+
+## Auto vs Human Curation Boundaries
