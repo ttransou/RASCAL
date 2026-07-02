@@ -310,3 +310,80 @@ You can provide relationship links in either form:
 When object form is used, ingestion preserves link-level metadata on the edge record (weight, confidence, human_reviewed, provenance, optional labels, and dates).
 
 If simple string form is used, RASCAL defaults apply by relationship type:
+- `requires`: strongest defaults (weight=1.0, confidence=0.95)
+- `depends_on`: medium defaults (weight=0.8, confidence=0.8)
+- `related_to`: lowest defaults (weight=0.6, confidence=0.65)
+Per-link object value always overrides these defaults.
+
+HITL gating behavior:
+- before HITL review, relationship links are treated as provisional and stored with neutral strength (weight=0.5, confidence=0.5)
+- After HITL review is marked complete ("human_reviewed": true at document override level, or per-link), semantic tier strengths are applied automatically.
+- custom per-link weight/confidence are only honored after HITL review (document-level or per-link)
+
+Framework requirement for all adopters:
+- Each team must define its own dataset policy for what qualifies as `requires`, `depends_on`, and `related_to`
+- Each team must define HITL ownership (who reviews, approval criteria, and escalation path)
+- Each team must define when document-level review is allowed vs per-link review only.
+- Each team must define confidence/weight override rules for their domain
+- These choices should be recorded in `metadata_overrides.json` under `curation_policy` before product onboarding.
+
+
+## Source URL Map Structure
+```json
+{
+  "by_doc_id":{
+    "doc_id", "http://wwww.whatever.com/../document.docx"
+  },
+    "by_source_file":{
+      "filename.docx":"http://www.whatever.com/../filename.docx"
+  },
+    "by_title":{
+      "Document Title":"http://www.whatever.com/../document.docx"
+  }
+}
+```
+
+🧠 **Customization point:** map each real source document to its canonical system-of-record URL.
+How to fill it in:
+- map each document's internal ID, filename, or title to its source URL
+- users see the source URL in the frontend (example: "View in Sharepoint/Drive" link)
+- All three indexes point to the same upstream documents and pick whichever keys make sense for your corpus.
+
+
+## Configuration and Customization Surfaces
+**This section defines where you inject domain knowledge.**
+
+RASCAL carefully distinguishes between framework infrastructures (the code and structure that remain constant across deployments) and domain customization (the vocabularies, definitions, and business/schema rules that change with each corpus).
+
+For enterprise reuse, it helps to separate what you must provide to get the framework running from what you may customize to adapt it to a new domain, operating model, or UI.
+
+
+## Required to Run vs. Optional to Customize
+| Surface                                   | Required to run?                                           | When it becomes required                                               | Why it exists                                                                            |
+| ----------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Source documents in `raw/`                  | Yes                                                        | Any real pipeline run                                                  | The framework need a corpus to extract and compile                                       |
+| `metadata_overrides.json`                   | Yes for a proper corpus run                                | Before treating the wiki as curated knowledge                          | Human summaries, key points, and relationships are part of the framework’s quality model |
+| `config/source_url_map.json`                | Yes for production-like traceability                       | Before expecting source links in citations/UI                          | Preserves traceability back to authoritative source systems                              |
+| `metadata_definitions.json`                 | Yes for metadata synthesis workflows                       | Before relying on normalized document types                            | Defines your taxonomy and must be curated for domain-fit                                 |
+| Python environment + requirements.txt     | Yes                                                        | Always                                                                 | Needed for the parser, API, and local runtime                                            |
+| Azure Open AI env vers                    | Only for `--wiki-mode llm` or non-simulated chat synthesis | When using Azure-backed LLM paths                                      | Enables LLM completion, embeddings, and chat synthesis                                   |
+| Cosmose env vers                          | Only for ingestion/cloud mode                              | When omitting `--skip-ingest` or running cloud-backed retrieval        | Enables graph ingestion and cloud-mode date access                                       |
+| metadata_definitions.json                 | No                                                         | Only when changing or extending the default type taxonomy              | Adjusts the document classification vocabulary                                           |
+| `config/fallback_qa.json`                   | No                                                         | When you want tailored low-evidence or pre-corpus answers              | Lets you inject domain-specific fallback behavior                                        |
+| `config/fallback_template.json`             | No                                                         | When you want to tune the assistant wording and clarification behavior | Lets you alter response template without code changes                                    |
+| `frontend/*` branding and tab mapping       | No                                                         | When white-labeling or adapting the UI to a new corpus                 | Supports reuse across teams and domains                                                  |
+| Pipeline flags in `backend/run_pipeline.py` | No                                                         | When changing flow, directories, or deployment mode                    | Makes the same framework reusable across local and cloud workflows                       |
+
+
+## Minimum Required to Run Locally
+For the smallest credible local run, you need only:
+- dependencies installed from requirements.txt
+- a few source files in `raw/`
+- curated `metadata_overrides.json`
+- curated `config/source_url_map.json`
+- scaffold mode pipeline run with `--skip-ingest`
+- local API with `--local-mode`
+Everything else in this section is about adaptation, enrichment, or alternate runtime paths.
+
+
+## Optional Enterprise Customization
