@@ -995,16 +995,16 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 
 ## How to Get Started on the Cloud (Close Knowledge System)
 
-### This Section needs review to adapt a non-Azure setup. The original documentation will exist elsewhere. (Pages 40-50)
+### This Section needs review to adapt to a non-Azure setup. The original documentation will exist elsewhere. (Pages 40-50)
 
 
-** Validation Checklist After a Build
+## Validation Checklist After a Build
 - Note: this checklist applies after you run a local build using your own source corpus.
 - `artifacts/json_output/` contains one `.json` per source document
 - `wiki/pags/policies|procedures|concept/` contains generated `.md` pages
 - `metadata_overrides.json` has curated entries under documents
-- `config/source_url_map.json` has URL mappings for docs your expect to cite
-- `GET/health` returns healthy mode status once API is running
+- `config/source_url_map.json` has URL mappings for docs you expect to cite
+- `GET/health` returns healthy mode status once the API is running
 
 
 ## API Endpoints
@@ -1041,10 +1041,10 @@ Curator Space health panel includes cascading monitoring, query telemetry recomm
 ## Curator Health in Plain Language (Non-Developer Guide)
 RASCAL is meant to be understandable to more than just engineering teams. In Curator Space, the health panel answers one practical question:
 
-**Can we trust the knowledge we are using to answer people right now? **
+**Can we trust the knowledge we are using to answer people right now?**
 
 Use this quick translation:
--State Pages
+- State Pages
   - What it means: content may be old or out of sync with source material
   - Why it matters: outdated policy/process content creates wrong answers.
   - What to do: prioritize review of stale pages first.
@@ -1057,20 +1057,20 @@ Use this quick translation:
   - Why it matters: broken or inconsistent structure reduces retrieval quality.
   - What to do: resolve errors first, then warnings
 - Cascade Pending
-  - What it means: source items marked for deletion still waiting for downstream cleanup
+  - What it means: source items marked for deletion are still waiting for downstream cleanup
   - Why it matters: stale graph artifacts can keep old relationships visible
-  - What to do: if the pending count grows, run/inspect cascade worker flow
+  - What to do: if the pending count grows, run/inspect the cascade worker flow
 - Query Telemetry
   - What it means: how many real query events were observed for analysis
-  - Why it matters: tells us what users actually ask so indeixing can be tuned to reality
+  - Why it matters: tells us what users actually ask, so indexing can be tuned to reality
   - What to do: review "Top Index Recommendations" and prioritize high-frequency field combinations.
 
 Local demo note:
-- In local-only mode, some cloud-back metrics (for example cascade lifecycle) are shown as unavailable by design
+- In local-only mode, some cloud-back metrics (for example, cascade lifecycle) are shown as unavailable by design
 - That is expected behavior in this framework and not an error.
 
 Operational rule of thumb:
-- If Freshness and Lint are healthy, and telemetry recommendations are being reviewed regularly, answer quality should remain stable and explainable to non-developers.
+- If Freshness and Lint are healthy and telemetry recommendations are being reviewed regularly, answer quality should remain stable and explainable to non-developers.
 
 
 ## Response Schemas
@@ -1081,7 +1081,7 @@ Operational rule of thumb:
 The frontend is a static, no-build-step HTML/CSS/JS application that is intentionally easy to adapt per corpus and use case.
 
 At a high level, the UI provides:
-- transparent answer groudning (trace, chunk visibility, citations)
+- transparent answer grounding (trace, chunk visibility, citations)
 - browsable wiki pages with type-based fitting
 - feedback capture and write-back to wiki pages
 - relationship map visualization of document links (graph view)
@@ -1090,24 +1090,24 @@ In the relationship map view, users can:
 - filter by node group and edge type
 - focus on a selected node to view a 1-3 hop subgraph
 - keep map settings/layout persisted across sessions
-Framework-level frontend customizations is concentrated in:
+Framework-level frontend customizations are concentrated in:
 - `frontend/index.html` for product naming, panel labels, and visible copy
-- `frontend/app.js` for category mapping, external docoument links, and wiki catalog rendering
+- `frontend/app.js` for category mapping, external document links, and wiki catalog rendering
 - `frontend/styles.css` for layout and visual treatment
-- `frontend/FRONTEND-README.md` for the UI-specific extention guide
-At the moment, this map should be read as a templatzied visualization layer. Because no real coropus has been ingested yet, the nodes and edges show are scaffolded example relationships rather than live graph structure from source documents.
+- `frontend/FRONTEND-README.md` for the UI-specific extension guide
+At the moment, this map should be read as a template-based visualization layer. Because no real corpus has been ingested yet, the nodes and edges shown are scaffolded example relationships rather than live graph structures from source documents.
 
 
 ## Interaction Model (Important)
-RASCAL is intentionall not a ChatGPT-style persistent chat product.
-- There is no transcript-stle cross-session chat memory ("hot caching" to be included")
-- Answers are generated from current retricel over the compile wiki/source artifacts.
-- Durable knowledge changes happen only through explicit write-back flows (for exmaple `POST /wiki` or curator approved draft promotion)
+RASCAL is intentionally not a ChatGPT-style persistent chat product.
+- There is no transcript-style cross-session chat memory ("hot caching" to be included)
+- Answers are generated from current retrieval over the compiled wiki/source artifacts.
+- Durable knowledge changes happen only through explicit write-back flows (for example, `POST /wiki` or curator-approved draft promotion)
 - Operational query logs may be retained for audit/analystics (`query_log.md` and `query_log.json`), but those logs are not treated as canonical wiki knowledge and are not a substitute for write-back.
 
 
  ## UI/UX Note: Curator Access Visibility
- Curator Space is intentionally discoverable but de-emphasized in the main UI. The sidebar inclueds an **Internal: Curator Space** link that opens `/feedback-review` in a new tab/window. This keeps curation workflows reachable for operators while avoiding prominance in the primary end-user chat flow.
+ Curator Space is intentionally discoverable but de-emphasized in the main UI. The sidebar includes an **Internal: Curator Space** link that opens `/feedback-review` in a new tab/window. This keeps curation workflows reachable for operators while avoiding prominence in the primary end-user chat flow.
 
  This pattern also keeps room for future role-based or environment-specific access controls without changing the core user journey.
 
@@ -1115,7 +1115,7 @@ RASCAL is intentionall not a ChatGPT-style persistent chat product.
  ## Critical Feature: Feedback and Write-Back
  This is an essential part of RASCAL's purpose.
 
- Without write-bac, high-quality answers are one-time outputs. With write-back, validate answers become reusuable wiki pages that improve future retrieval and coverage.
+ Without write-back, high-quality answers are one-time outputs. With write-back, validated answers become reusable wiki pages that improve future retrieval and coverage.
 
  This is the mechanism that turns the system into a compounding knowledge base instead of a stateless chat surface.
 
