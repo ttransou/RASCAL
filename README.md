@@ -977,11 +977,22 @@ If your goal is only to prove the framework works end-to-end locally, the six st
 After the framework is running, the most common customization steps are:
 1. Replace the default taxonomy in `metadata_definitions.json` if your corpus is not best described as directive/requirement/procedure/form.
 2. Replace template fallback content in `config/fallback_qa.json` and `config/fallback_templates.json` so low-evidence responses sound like your organization
-3. Add Azure Open AI and Cosmos settings in `.env` when moving from local scaffold mode to LLM or cloud-backed operation.
+3. Add Azure OpenAI and Cosmos settings to `.env` when moving from local scaffold mode to LLM or cloud-backed operation.
 4. Repoint pipeline directories or switch modes with `backend/run_pipeline.py` flags if your corpus layout or runtime path differs from the default.
 5. Rebrand the UI and adapt type tabs in `frontend/index.html` and `frontend/app.js` when reusing the framework for another team.
 
 
 ## Clone and Customize Handoff (No Bundled Data)
 When stakeholders clone this framework, the fastest path is:
-1.
+1. Add representative file types into `raw/`
+2. Run python `backend/run_pipeline.py --raw-dir --skip-ingest`
+3. Curate `metadata_overrides.json` for summaries, key points, and relationships
+4. Curate `config/source_url_map.json` for source traceability links.
+5. Validate parser behavior with `.\smoke_validate_source_formats.ps1`
+6. Start local UI with `.\start_local_ui.ps1` and review grounded answers/citations.
+This sequence intentionally keeps onboarding lightweight for first-time adopters while preserving traceability and curation controls.
+
+
+## How to Get Started on the Cloud (Close Knowledge System)
+
+### This Section needs review to adapt a non-Azure setup. The original documentation will exist elsewhere. (Pages 40-50)
