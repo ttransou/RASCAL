@@ -770,12 +770,199 @@ Process:
 - loads JSON from `artifacts/json_output/
 - Merges enrichments from `metadata_overrides.json`
 - looks up source URLs from `config/sources_url_map.json`
-- converts content to Markdown organized by document type
+- converts content to Markdown, organized by document type
 - generates index JSON (`wiki/index.json`) for frontend navigation
 Bucket definition:
 - A bucket is the wiki subdirectory where a compiled wiki page is written
 - Buckets are derived from type (for example: `policies/`, `summaries/`, `primary_source`)
 Output: Runtime-generated Markdown pages organized by bucket
 
+```
+wiki/pages/
+policies/    (type: directive or requirement)
+  policy-001.md
+  policy-002.md
+procedures/    (type: procedure or form)
+  procedure-001.md
 
+et al., ad nauseam
+```
+
+Example Markdown Output (generic)
+```markdown
+# Framework Overview and Purpose
+## What this Covers
+Establisheds the foundations
+## Control Points
+- All must follow this framework
+- reviews required
+- etc
+## Source Link
+- View in Sharepoint/Drive [Framework](http://www.whatver.com/document.docx)
+- See detailed source summary [Summary](./summaries/policy.md)
+## Detailed Guidance
+### Purpose
+- provide clear purpose
+### Scope
+- provide clear scope
+### Responsibility
+- Curator, operator, etc.
+```
+
+**Stage 5: Runtime Wiki Index (`wiki/index.json`)
+Process:
+- Built by `wiki_compiler.py` at compile time
+- indexed by the API on startup
+- consumed by the frontend to populate the sidebar navigation
+
+Structure (generic example):
+```json
+{
+"schema_version": "0.1.0",
+"generated_utc": "2026-04-27T13:05:00Z",
+"documents":[
+{
+"id": "policy-001",
+"type": "policy",
+"title":"Policy 1",
+"summary":"Establishes 1st policy...",
+"wiki_path":"policy-001.md",
+"bucket":"policies",
+"relationships":{
+"requires":[...]
+"depends_on":[...]
+"related_to":[...]
+},
+"source_url":"http://www.whatever.com/..."
+},
+...
+]
+}
+```
+
+**Stage 6: Retrieval & Serving (`graph_api.py`)**
+Process:
+- local `wiki/index.json` at startup
+- reads all Markdown pages from `wiki/pages/`
+- on user query:
+  - retrieves relevant pages (vector + keyword search)
+  - includes metadata, relationships, and source links
+  - sends to LLM for synthesis
+  - returns answer + trace + citations
+    
+**Data served to frontend (generic example):**
+```json
+{
+"answer":"The framework requires that all...",
+"trace":"{
+"query":"What is the purpose of this...?",
+"retrieved_docs":[
+}
+"id":"policy-001",
+"score":0.92
+"excerpt":"All the policies are mandated...",
+"source_url":"http://www.whatever.com/policy-001.docx"
+}
+]
+},
+"citations":[
+{
+"doc_id":"policy-001",
+"page":"Policies",
+"link":"http://www.whatever.com/policy-001.doc"
+}
+]
+}
+```
+
+
+## Summary: Where Data Flows & Where Human Input Happens
+
+| Stage | Input | Process | Output | Human Input? |
+| :---- | :---- | :---- | :---- | :---- |
+| 1 | User uploads files | Drop in `raw/` | .docx, .xlsx, .pdf | Upload |
+| 2 | `raw/` files | Extract & classification | `artifacts/json_output/*.json` | Automatic |
+| 3 | JSON \+ stubbed overrides | Enrich metadata | `metadata_overrides.json` (edited) | REQUIRED |
+| 3b | JSON | Map source URLs | `config/source_url_map.json` (edited) | REQUIRED |
+| 4 | JSON \+ overrides \+ URL map | Wiki compilation | `wiki/pages/*` \+ `wiki/index.json` | Automatic |
+| 5 | Markdown wiki | API Loads & indexes | In-memory wiki \+ vector DB | Automatic |
+| 6 | Query \+ retrieved pages | LLM synthesis | Answer \+ trace \+ citations | Automatic |
+
+
+## End-to-end Workflow
+This is the fastest way to understand how raw/source documents become answers users can inspect and improve.
+
+*MERMAID DIAGRAM*
+
+
+## Practical Walkthrough
+1. Add a few representative raw source documents to `raw/`
+2. Run extraction to produce JSON artifacts in `artifacts/json_output/`
+3. curate `metadata_overrides.json` and `config/source_url_map.json`
+4. compile wiki pages into `wiki/pages` and `wiki/index.json`
+5. start API/UI and ask questions
+6. inspect trace/citations in the frontend to validate grounding
+7. use feedback: thumbs-down logs quality issues, thumbs up + save writes useful answers back to the wiki
+
+
+## Quick Start
+**Required to Run**
+1) Install dependencies
+``` bash
+#create and activate an isolated environment for this project
+python -m venv.venv
+.\venv\scripts\activate.ps1    # Windows PowerShell
+
+#install parser, API, and Azure integration dependencies
+pip install -r requirements.txt
+```
+
+2) Add your source documents
+Place .doc, .pdf, etc in `raw/`
+
+3) Build local artifacts (Scaffold Mode - Default)
+```bash
+python backend/run_pipeline.py --raw-dir --skip-ingest
+```
+
+This runs the full pipeline in scaffold mode by default (deterministic, no LLM). See Compilation modes for LLM-enhanced compilation.
+
+Common variations:
+- use `--wiki-mode llm` once Azure OpenAI is configured and you want richer page compilation
+- use `--pipeline-mode legacy` only if you need the older `docx_to_json.py` + `synth_metadata.py` split flow
+- omit `--skip-ingest` when you want the pipeline to push graph data into Cosmos DB
+- add `--run-cascade-worker` after ingestion when you want pending tombstones physically cascaded
+- add `--cascade-dry-run` with `--run-cascade-worker` to preview cascade operations without writes
+
+4) Start the API
+```bash
+python backend/graph_api.py --local-mode --simulate-llm --port8000
+```
+
+4b) One-command local launcher (optional)
+If you prefer a wrapper script for local testing:
+```powershell
+.\start_local_ui.ps1
+```
+
+This script:
+- activates `.venv` when present
+- starts `backend/graph_api.py` in local simulation mode on port 8000
+- writes PID state to `.api_pid.txt`
+- writes logs to `artifacts/local_api.out.log` and `artifacts/local_api.err.log`
+
+To stop the local API this way:
+```powershell
+.\stop_local_ui.ps1
+```
+
+5) Open the app
+Browse to http://127.0.0.1:8000
+
+6) Open Curator Space (Feedback/Triage)
+After the API is running, open Curator Space directly at:
+- http://127.0.0.1:8000/feedback-review
+You can also reach it from the main app shell (/) useing the sidebar link labled **Internal: Curator Space**. That entry intentionally opens in a new tab/window and is styled as a low-emphasis internal contol rather tha a primary end-user action.
+
+What you can do there:
 
