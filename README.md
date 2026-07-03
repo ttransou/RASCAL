@@ -274,7 +274,7 @@ $INSERT MERMAID DIAGRAM$
 ## Metadata Overrides Structure
 See `metadata_overrides.json` for framework-ready example entries covering:
 - unreviewed linkage (provisional strength)
-- document-level HITL reviewed linkage (semantic tier strengths)
+- document-level HITL-reviewed linkage (semantic tier strengths)
 - per-link HITL reviewed override with explicit weight/confidence
 🧠 **Customization point:** replace all example document keys, relationship targets, and confidence semantics with your domain-specific curated values.
 
@@ -502,6 +502,7 @@ The framework itself needs **zero human intervention** to operate. All of the fo
 | Retrieval (vector/node \+ keyword) | `graph_api.py` | No | Combined scoring uses fixed weights, works out-of-box |
 | Citation generation | `graph_api.py` | No | Automatic reverse lookup from source map |
 | Feedback capture | `` `frontend/graph_api.py` `` | No | Logs to wiki append-only query log |
+
 **Result:** Framework produces a valid, self-contained pseudo-graph and retrieval system without human judgment.
 
 
