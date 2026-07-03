@@ -519,6 +519,7 @@ When an operator uses the framework on a **specific corpus**, they have the opti
 | Fallback answers | Pre-write answers for common questions when corpus coverage is weak | Yes | During early rollout or for out-of-corpus questions | Graceful degradation; better user experience |
 | UI customization | Rebrand, change tab labels, remap type categories in `frontend/` | Yes | When adapting RASCAL for a different business unit/domain space | Better fit to domain vocabulary |
 | Feedback review | Read query logs and write verified answers back into wiki | Yes | When you want compounding loop (answers \+ wiki knowledge) | Continuously improving knowledge base |
+
 **Key Point**: None of these are required for RASCAL to work. The framework is self-contained and autonomous. These are value-adds that an operator can choose to invest in.
 
 
@@ -1036,6 +1037,7 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 | `GET/feedback-data` | Raw negative feedback entries (newest-first JSONL, ready by the triage dashboard) |
 | `GET/triage_audit` | Curator audit events feed (used by Curator Space audit panel) |
 | `POST/wiki` | Save a generated answer as a new wiki page |
+
 Curator Space health panel includes cascading monitoring, query telemetry recommendations, and baseline graph analytics via `/cascade_status`, `/query_telemetry_summary`, and `/graph_analytics_summary`.
 
 
