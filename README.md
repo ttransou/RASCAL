@@ -622,20 +622,160 @@ This framework branch intentionally ships with no prebuilt wiki markdown pages. 
 ↓  
 `graph_api.py` (loads wiki at startup)  
 ↓  
-User asks question  
+User asks a question  
 ↓  
 retrieval → LLM synthesis → answer + trace + citations
 
-**At set 1**, `metadata_overrides.json` and `source_url_map.json` are loaded and merged with extracted metadata to enrich the wiki with human judgement.
+**At set 1**, `metadata_overrides.json` and `source_url_map.json` are loaded and merged with extracted metadata to enrich the wiki with human judgment.
 
 
 ## Data Objects and Terminology
-To keep this README coherent, these terms are used consistantly:
+To keep this README coherent, these terms are used consistently:
 - Raw/source documents: original input files in `raw/` (ex: DOCX, XLSX, JSON, et al)
-- JSON artifiacts: extracted, structure intermediate files in `artifacts/json_output/`
+- JSON artifacts: extracted, structured intermediate files in `artifacts/json_output/`
 - Wiki pages: compiled Markdown knowledge pages in `wiki/pages/`
 
 
-## Canonoical Type Field
+## Canonical Type Field
 Use types as the canonical document taxonomy field across pipeline stages.
 - Extraction infers type
+- Human curation can override/refine type in `metadata_overrides.json`
+- Wiki compilation uses type to place pages into buckets and annotate metadata
+- Frontend filters and tabs are mapped from type
+If you have legacy payloads that expose `page_type`, treat them as compatibility aliases and normalize to the type in your API/serialization layer.
+
+
+## How this Differs from the Original LLM Wiki Gist
+The core idea is the same: build a wiki-shaped, grounded knowledge layer first, then answer questions from that curated representation instead of trating the model as the source of truth.
+
+This repo differs in a few important ways:
+- It is Azure Stack-oriented. The runtime, optional synthesis path, and deployment assumptions are built around Azure OpenAI and related Azure hosting patterns.
+- It does not use Claude models or autonomous multi-agent orchestration. The runtime is a single-assistant, pipeline-driven retrieval-and-answer flow.
+- It uses an explicit extraction pipeline. Raw source documents are converted into structured JSON artifacts before wiki compilation, rather than assuming a single monolithic wiki-generation step.
+- It keeps a human curation layer in the loop; `metadata_overrides.json` and `config/source_url_map.json` are first-class parts of the workflow, not incidental extras.
+- It separates deterministic and LLM-assisted compilation. Scaffold mode gives a reproducible baseline; LLM mode is an optional enhancement, not the only path.
+- It is designed for a variety of corpora in a variety of settings (academic or enterprise). The document model, relationships, traceability, and citation handking are optimized for a variety of document formats (policy, procedure, forms, analysis, primary sources)
+- It exposes an application surface, not just a content artifact. The wiki is compiled into assets that are then served through API and frontend layers with retrieval trace and citations.
+In short, this project is best understood as an Azure-centric, policy-assistant implementation of an LLM Wiki pattern rather than a direct clone of the original gist.
+
+
+## Data Flow Transparency
+**Note:** All file and document names in the section are generic examples. Your actual corpus will have different names, structures, and IDs. The pattern show here apply to any policy/procedure documents you bring, but can be substituted with other data contexts.
+
+**Stage 1: Raw Source Dcouments (`raw/`)
+Input: DOCX, XLSX, PPTX, PDF, HTML, JSON, CSV (user-supplied)
+Example (generic):
+```
+raw/
+policy-document-001.docx
+procedure-guideline-a.docx
+reference-framework.xlsx
+```
+
+### Data Flow and Human Input Points
+**Stage 2: Extract to JSON (`process_raw_sources.py` + `artifacts/json_output/`)**
+Process: 
+- reads each file in `raw/`
+- extracts content structure (paragraphs, tables, lists, runs)
+- infers document type (directive|requirement|procedure|form|concept|primary source)
+- generated machine readable ID, captures source metadata
+- scaffolds a stub in `metadata_overrides.json`
+Output: One JSON file per source document
+
+**Schema (partial, generic example):**
+```json
+{
+"schema_version": "1.0.0", 
+"generated_utc": "2026-04-27T12:33:05Z", 
+"id": "policy-001-framework-overview-a7f3e2b9c1d4", "type": "directive". 
+"title": "Framework Overview and Purpose", 
+"summary": "Summary pending human review.", 
+"key_points": [], 
+"relationships":{ 
+"requires":[], 
+"depends_on": [], 
+"related_to":[]
+}, 
+"source": { 
+"file_name": "policy-document-001.docx", 
+"absolute_path": "C:\\...\\raw\\policy-document-001.docx", 
+"size_bytes":48289, 
+"created_utc": "2026-04-27T11:53:47Z", 
+"modified_utc": "2026-04-27T11:53:47Z"
+},
+"document_properties":{ 
+"author": "Author Name", 
+"last_modified_by": "Modifier Name", 
+"created_utc": "2025-02-28T13:43:00Z"
+}
+"conversion_summary":{ 
+"element_count": 44, 
+"paragraph_count": 43, 
+"table_count": 1, 
+"word_count": 823 
+}, 
+"elements":[ 
+{ 
+"type":"paragraph", 
+"element_index":0, 
+"style":"Heading1", 
+"text": "Framework Overview and Purpose", "runs": [...]
+},
+...
+]
+}
+```
+**Location:** `artifacts/json_output/policy-document-001.json`
+
+### Stage 3: Human Curation (Edit these Files)
+`metadata_overrides.json` -- Enrich extracted metadata with human judgment (generic example):
+```json
+{
+"documents":{
+"policy-document-001.docx": {
+"id": "policy-001-framework-overview-a7f3e2b9c1d4",
+"type": "directive",
+"title": "Framework Overview and Purpose",
+"summary": "Establishes the foundational principles and scope of the policy framework...",
+"key points":[
+"All departments must follow this framework.",
+"Annual reviews required.",
+"Exceptions require director approval."
+]
+"relationships": {
+"requires":["Core Principles Guide"],
+"depends_on": [].
+"related_to": ["Implementation Procedures"]
+}
+}
+}
+}
+```
+
+**`config/source_url_map.json`** -- Map documents to their source URLs (generic example):
+```json
+"by_doc_id": {
+"policy-001-framework-overview-a7f3e2b9c1d4": "https://sharepoint.company.com/sites/policies/poll
+"by_source_file": {
+"policy-document-001.docx": "https://sharepoint.company.com/sites/policies/policy-001.docx"
+}
+"by_title":{
+"Framework Overview and Purpose": "https://sharepoint.company.com/sites/policies/policy-001.docx
+}
+}
+```
+
+**Stage 4: Compile to Wiki (`wiki_compiler.py` → `wiki/pages/`)**
+Process: 
+- loads JSON from `artifacts/json_output/
+- Merges enrichments from `metadata_overrides.json`
+- looks up source URLs from `config/sources_url_map.json`
+- converts content to Markdown organized by document type
+- generates index JSON (`wiki/index.json`) for frontend navigation
+Bucket definition:
+- A bucket is the wiki subdirectory where a compiled wiki page is written
+- Buckets are derived from type (for example: `policies/`, `summaries/`, `primary_source`)
+Output: Runtime-generated Markdown pages organized by bucket
+
+
+
