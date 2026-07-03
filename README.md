@@ -996,3 +996,47 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 ## How to Get Started on the Cloud (Close Knowledge System)
 
 ### This Section needs review to adapt a non-Azure setup. The original documentation will exist elsewhere. (Pages 40-50)
+
+
+** Validation Checklist After a Build
+- Note: this checklist applies after you run a local build using your own source corpus.
+- `artifacts/json_output/` contains one `.json` per source document
+- `wiki/pags/policies|procedures|concept/` contains generated `.md` pages
+- `metadata_overrides.json` has curated entries under documents
+- `config/source_url_map.json` has URL mappings for docs your expect to cite
+- `GET/health` returns healthy mode status once API is running
+
+
+## API Endpoints
+
+| Endpoint | Description |
+| :---- | :---- |
+| `GET/` | `Frontend shell` |
+| `GET/graph-map` | `Relationship map UI (currently templatized until corpus ingest)` |
+| `GET/graph_map_data` | `Graph nodes/edges payload for visualization (currently scaffolded example data)` |
+| `GET/health` | `Mode and service health` |
+| `POST/ask` | `Grounded answer with retrieval trace and citations` |
+| `GET/wiki_index` | `Wiki catalog for the documents sidebar` |
+| `GET/wiki_freshness` | `Freshness/staleness view used by FAQ health and Curator Space (local + cloud modes).` |
+| `GET/cascade_status` | `Cascade/tombstone lifecycle counts for Curator Space (cloud metrics; local mode reports unsupported)` |
+| `GET/query_telemetry_summary` | `Aggregated Cosmos query-shape telemetry and index recs for tuning` |
+| `GET/graph_analysis_summary` | `Baseline graph analytics (connectors, components, isolated-node counts) for Curator Space health and curation prioritization` |
+| `GET/wiki_/{page_id}` | `Single wiki page payload` |
+| `POST/wiki_mark_reviewed` | `Mark a wiki page as reviewed (local mode) and append curator audit metadata` |
+| `GET/raw/{file_name}` | `Fetch a raw source file by filename when available` |
+| `GET/schema/document` | `Document schema contract metadata` |
+| `GET/schema/lint` | `Lint schema contract and allowed values` |
+| `GET/lint/document` | `Runtime lint report over loaded wiki pages` |
+| `GET/graph_connection/explain` | ``Explain path connectivity between two graph nodes (`from_id`, `to_id`, `max_hops`); in cloud mode, prefers materialized path docs with live-traversal fallback`` |
+| `POST/feedback` | ``Log thumbs up/down rating (includes `cited_docs` captured from retrieval)`` |
+| `POST/feedback-triage` | `Update triage status and curator note on a negative-feedback entry (pending|resolved|proposed_wiki|proposed_override)` |
+| `POST/feedback-propose-wiki` | `` Turn a negative feedback entry into a Markdown draft under `wiki/pages/curation_drafts/` `` |
+| `GET/feedback-review` | Curator space dashboard (feedback triage + wiki health + audit trail). Open directly at http://127.0.0.1:8000/feedback-review when the local API is running |
+| `GET/feedback-data` | `Raw negative feedback entries (newest-first JSONL, ready by the triage dashboard)` |
+| `GET/triage_audit` | Curator audit events feed (used by Curator Space audit panel) |
+| `POST/wiki` | Save a generated answer as a new wiki page |
+Curator Space health panel includes cascading monitoring, query telemetry recommendations, and baseline graph analytics via `/cascade_status`, `/query_telemetry_summary`, and `/graph_analytics_summary`.
+
+
+## Curator Health in Plain Language (Non-Developer Guide)
+RASCAL is meant to be understandable beyondd engineering teams.
