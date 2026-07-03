@@ -1011,32 +1011,115 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 
 | Endpoint | Description |
 | :---- | :---- |
-| `GET/` | `Frontend shell` |
-| `GET/graph-map` | `Relationship map UI (currently templatized until corpus ingest)` |
-| `GET/graph_map_data` | `Graph nodes/edges payload for visualization (currently scaffolded example data)` |
-| `GET/health` | `Mode and service health` |
-| `POST/ask` | `Grounded answer with retrieval trace and citations` |
-| `GET/wiki_index` | `Wiki catalog for the documents sidebar` |
-| `GET/wiki_freshness` | `Freshness/staleness view used by FAQ health and Curator Space (local + cloud modes).` |
-| `GET/cascade_status` | `Cascade/tombstone lifecycle counts for Curator Space (cloud metrics; local mode reports unsupported)` |
-| `GET/query_telemetry_summary` | `Aggregated Cosmos query-shape telemetry and index recs for tuning` |
-| `GET/graph_analysis_summary` | `Baseline graph analytics (connectors, components, isolated-node counts) for Curator Space health and curation prioritization` |
-| `GET/wiki_/{page_id}` | `Single wiki page payload` |
-| `POST/wiki_mark_reviewed` | `Mark a wiki page as reviewed (local mode) and append curator audit metadata` |
-| `GET/raw/{file_name}` | `Fetch a raw source file by filename when available` |
-| `GET/schema/document` | `Document schema contract metadata` |
-| `GET/schema/lint` | `Lint schema contract and allowed values` |
-| `GET/lint/document` | `Runtime lint report over loaded wiki pages` |
-| `GET/graph_connection/explain` | ``Explain path connectivity between two graph nodes (`from_id`, `to_id`, `max_hops`); in cloud mode, prefers materialized path docs with live-traversal fallback`` |
-| `POST/feedback` | ``Log thumbs up/down rating (includes `cited_docs` captured from retrieval)`` |
-| `POST/feedback-triage` | `Update triage status and curator note on a negative-feedback entry (pending|resolved|proposed_wiki|proposed_override)` |
-| `POST/feedback-propose-wiki` | `` Turn a negative feedback entry into a Markdown draft under `wiki/pages/curation_drafts/` `` |
+| `GET/` | Frontend shell |
+| `GET/graph-map` | Relationship map UI (currently templatized until corpus ingest) |
+| `GET/graph_map_data` | Graph nodes/edges payload for visualization (currently scaffolded example data) |
+| `GET/health` | Mode and service health |
+| `POST/ask` | Grounded answer with retrieval trace and citations |
+| `GET/wiki_index` | Wiki catalog for the documents sidebar |
+| `GET/wiki_freshness` | Freshness/staleness view used by FAQ health and Curator Space (local + cloud modes). |
+| `GET/cascade_status` | Cascade/tombstone lifecycle counts for Curator Space (cloud metrics; local mode reports unsupported) |
+| `GET/query_telemetry_summary` | Aggregated Cosmos query-shape telemetry and index recs for tuning |
+| `GET/graph_analysis_summary` | Baseline graph analytics (connectors, components, isolated-node counts) for Curator Space health and curation prioritization |
+| `GET/wiki_/{page_id}` | Single wiki page payload |
+| `POST/wiki_mark_reviewed` | Mark a wiki page as reviewed (local mode) and append curator audit metadata |
+| `GET/raw/{file_name}` | Fetch a raw source file by filename when available |
+| `GET/schema/document` | Document schema contract metadata |
+| `GET/schema/lint` | Lint schema contract and allowed values |
+| `GET/lint/document` | Runtime lint report over loaded wiki pages |
+| `GET/graph_connection/explain` | Explain path connectivity between two graph nodes (`from_id`, `to_id`, `max_hops`); in cloud mode, prefers materialized path docs with live-traversal fallback |
+| `POST/feedback` | Log thumbs up/down rating (includes `cited_docs` captured from retrieval) |
+| `POST/feedback-triage` | Update triage status and curator note on a negative-feedback entry (pending|resolved|proposed_wiki|proposed_override) |
+| `POST/feedback-propose-wiki` | Turn a negative feedback entry into a Markdown draft under `wiki/pages/curation_drafts/` |
 | `GET/feedback-review` | Curator space dashboard (feedback triage + wiki health + audit trail). Open directly at http://127.0.0.1:8000/feedback-review when the local API is running |
-| `GET/feedback-data` | `Raw negative feedback entries (newest-first JSONL, ready by the triage dashboard)` |
+| `GET/feedback-data` | Raw negative feedback entries (newest-first JSONL, ready by the triage dashboard) |
 | `GET/triage_audit` | Curator audit events feed (used by Curator Space audit panel) |
 | `POST/wiki` | Save a generated answer as a new wiki page |
 Curator Space health panel includes cascading monitoring, query telemetry recommendations, and baseline graph analytics via `/cascade_status`, `/query_telemetry_summary`, and `/graph_analytics_summary`.
 
 
 ## Curator Health in Plain Language (Non-Developer Guide)
-RASCAL is meant to be understandable beyondd engineering teams.
+RASCAL is meant to be understandable to more than just engineering teams. In Curator Space, the health panel answers one practical question:
+
+**Can we trust the knowledge we are using to answer people right now? **
+
+Use this quick translation:
+-State Pages
+  - What it means: content may be old or out of sync with source material
+  - Why it matters: outdated policy/process content creates wrong answers.
+  - What to do: prioritize review of stale pages first.
+- Freshness Threshold
+  - What it means: the review age limit (in days) before content is treated as needing attention.
+  - Why it matters: sets your expected recertification cadence.
+  - What to do: adjust the threshold only if your business/unit update cadence changes.
+- Lint Errors/Lint Warnings
+  - What it means: quality checks on structure, required fields, and linked references.
+  - Why it matters: broken or inconsistent structure reduces retrieval quality.
+  - What to do: resolve errors first, then warnings
+- Cascade Pending
+  - What it means: source items marked for deletion still waiting for downstream cleanup
+  - Why it matters: stale graph artifacts can keep old relationships visible
+  - What to do: if the pending count grows, run/inspect cascade worker flow
+- Query Telemetry
+  - What it means: how many real query events were observed for analysis
+  - Why it matters: tells us what users actually ask so indeixing can be tuned to reality
+  - What to do: review "Top Index Recommendations" and prioritize high-frequency field combinations.
+
+Local demo note:
+- In local-only mode, some cloud-back metrics (for example cascade lifecycle) are shown as unavailable by design
+- That is expected behavior in this framework and not an error.
+
+Operational rule of thumb:
+- If Freshness and Lint are healthy, and telemetry recommendations are being reviewed regularly, answer quality should remain stable and explainable to non-developers.
+
+
+## Response Schemas
+*To be added*
+
+
+## Frontend - Customization and Transparency
+The frontend is a static, no-build-step HTML/CSS/JS application that is intentionally easy to adapt per corpus and use case.
+
+At a high level, the UI provides:
+- transparent answer groudning (trace, chunk visibility, citations)
+- browsable wiki pages with type-based fitting
+- feedback capture and write-back to wiki pages
+- relationship map visualization of document links (graph view)
+- a subtle internal navigation path to Curator Space (`/feedback-review`) from the main sidebar
+In the relationship map view, users can:
+- filter by node group and edge type
+- focus on a selected node to view a 1-3 hop subgraph
+- keep map settings/layout persisted across sessions
+Framework-level frontend customizations is concentrated in:
+- `frontend/index.html` for product naming, panel labels, and visible copy
+- `frontend/app.js` for category mapping, external docoument links, and wiki catalog rendering
+- `frontend/styles.css` for layout and visual treatment
+- `frontend/FRONTEND-README.md` for the UI-specific extention guide
+At the moment, this map should be read as a templatzied visualization layer. Because no real coropus has been ingested yet, the nodes and edges show are scaffolded example relationships rather than live graph structure from source documents.
+
+
+## Interaction Model (Important)
+RASCAL is intentionall not a ChatGPT-style persistent chat product.
+- There is no transcript-stle cross-session chat memory ("hot caching" to be included")
+- Answers are generated from current retricel over the compile wiki/source artifacts.
+- Durable knowledge changes happen only through explicit write-back flows (for exmaple `POST /wiki` or curator approved draft promotion)
+- Operational query logs may be retained for audit/analystics (`query_log.md` and `query_log.json`), but those logs are not treated as canonical wiki knowledge and are not a substitute for write-back.
+
+
+ ## UI/UX Note: Curator Access Visibility
+ Curator Space is intentionally discoverable but de-emphasized in the main UI. The sidebar inclueds an **Internal: Curator Space** link that opens `/feedback-review` in a new tab/window. This keeps curation workflows reachable for operators while avoiding prominance in the primary end-user chat flow.
+
+ This pattern also keeps room for future role-based or environment-specific access controls without changing the core user journey.
+
+
+ ## Critical Feature: Feedback and Write-Back
+ This is an essential part of RASCAL's purpose.
+
+ Without write-bac, high-quality answers are one-time outputs. With write-back, validate answers become reusuable wiki pages that improve future retrieval and coverage.
+
+ This is the mechanism that turns the system into a compounding knowledge base instead of a stateless chat surface.
+
+ *Mermaid Diagram?*
+
+ Flow Highlights:
+ 
