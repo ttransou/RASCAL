@@ -483,4 +483,159 @@ Use this shape per document when you want concept/metadata support with optional
 - Reliability mode (especially for enterprise): requires human review only for critical concept mappings and policy-chain edge.
 
 
-## When Human-in-the Loop (HITL) is Needed: Framework vs. Instance Level
+## When Human-in-the-Loop (HITL) is Needed: Framework vs. Instance Level
+This section clarifies where human judgment is required vs. where the framework is fully automated. Understanding this distinction prevents over-engineering at the framework level and clearly defines what each party (framework developer, corpus operator, domain expert) is responsible for.
+
+
+## Framework Level: No HITL Required - Autonomous
+The framework itself needs **zero human intervention** to operate. All of the following are automatic:
+
+| Process | Automate By | Human Input? | Why |
+| :---- | :---- | :---- | :---- |
+| Document extraction (DOCX/XLSX/PDF, et al →JSON) | `process_raw_sources.py` | NO | Framework handles any well-formed supported source file |
+| Paragraph extraction & chunking | `wiki_compiler.py` | NO | Deterministic semantic chunking (configurable but automatic) |
+| Bidirectional edge creation | `graph_ingest.py` | NO | Relationships extracted from JSON; reversed \+ stored automatically |
+| Edge metadata (weight, confidence, provenance) | `graph_ingest.py` | No | Defaults are sensible; all edges created with full metadata schema |
+| Multi-hop graph traversal | `graph_chat.py` | No | Queries work with default parameters; no human tuning needed |
+| Cascade delete on document update | `graph_ingest.py` | No | Automatic cleanup; logged for audit |
+| Wiki compilation | `wiki_compiler.py` | No | Scaffold or LLM mode both produce valid wiki structure |
+| Retrieval (vector/node \+ keyword) | `graph_api.py` | No | Combined scoring uses fixed weights, works out-of-box |
+| Citation generation | `graph_api.py` | No | Automatic reverse lookup from source map |
+| Feedback capture | `` `frontend/graph_api.py` `` | No | Logs to wiki append-only query log |
+**Result:** Framework produces a valid, self-contained pseudo-graph and retrieval system without human judgment.
+
+
+## Instance Level: Optional HITL for Enrichment, Optional Customization
+When an operator uses the framework on a **specific corpus**, they have the option (not a requirement) to add human judgment. This is corpus-specific, not framework-level:
+
+| Where | What | Optional? | When You’d Use it | Impact |
+| :---- | :---- | :---- | :---- | :---- |
+| Metadata curation | Summaries, key points, relationship in `metadata_overrides.json` | Yes | Before releasing the wiki as “curated knowledge” | Better initial retrieval; richer user context |
+| Source link mapping | Document IDs →authoritative URLS in `config/source_url_map.json` | Yes | When users need to verify claims against source | Traceability \+ authority |
+| Relationship validation | Mark extracted edges as `human_reviewed`: true after verification | Yes | When dependencies matter for compliance/policy chains | Enable high-confidence traversal queries |
+| Relationship weighing | Adjust weight (0.0-1.0) to mark critical vs. weak dependencies | Yes | When some links are stronger than others (e.g., legal vs. informational) | Allows filtering to only strong paths |
+| Confidence adjustment | Set confidence: 1.0 on verified edges; leave confidence on \< 1.0 on speculative ones | Yes | When distinguishing extracted-guess from curated-fact | Query filtering by minimum confidence |
+| Fallback answers | Pre-write answers for common questions when corpus coverage is weak | Yes | During early rollout or for out-of-corpus questions | Graceful degradation; better user experience |
+| UI customization | Rebrand, change tab labels, remap type categories in `frontend/` | Yes | When adapting RASCAL for a different business unit/domain space | Better fit to domain vocabulary |
+| Feedback review | Read query logs and write verified answers back into wiki | Yes | When you want compounding loop (answers \+ wiki knowledge) | Continuously improving knowledge base |
+**Key Point**: None of these are required for RASCAL to work. The framework is self-contained and autonomous. These are value-adds that an operator can choose to invest in.
+
+
+## Where HITL Becomes Essential (Not Framework, but Operator Judgment)
+Human hands are genuinely needed in only one place, and it's outside RASCAL.
+
+**Domain knowledge verification**:
+- The framework cannot verify if a relationship extracted from a policy/source document is *actually* correct in your organization.
+- Example: RASCAL might extract "Policy A requires Policy B" from document text, btut a legal or policy expery needs to confirm that this relationship is *intended* and *accurate* for your operating model
+- If a relationship is wrong, the entire downstream dependency is tainted.
+
+** How to handle this:**
+1. Run RASCAL extraction (automatic, no review needed)
+2. Operator reads extracted relationships and metadata
+3. **Domain expert reviews and marks as verified** ← This is HITEL
+4. Operator sets `human_reviewed`: true on verified relationships (optional but reccomended for critical paths)
+5. Users can then query with `min_confidence` filter to focus on verified chains.
+
+
+## HITL Summary: Who Does What
+
+| Role | Responsibility | HITL Required? | When |
+| :---- | :---- | :---- | :---- |
+| Framework Developer | Code, pipeline logic, schema | No | Framework is autonomous |
+| Corpus Operator | Run pipeline, manage metadata, maintain mappings | Minimal | Just fitting in `metadata_overrides.json` and `source_url_map.json` |
+| Domain Expert | Verify extracted relationships are correct for your org/use case | Yes | Before making edges `human_reviewed`: true |
+| Product Manager et al. | UI/UX customization, fallback answers | Optional | If you want a tailored experience |
+
+**Typical workflow:**
+1. Operator: Run framework extraction (automatic)
+2. Domain Expert: Review relationships (HITL verification)
+3. Operator: Mark verified edges with metadata (optional enrichment)
+4. Users: Query with filters to focus on verified chains (automatic retrieval)
+
+
+## Onboarding RASCAL
+Use this sequence when onboarding RASCAL for a new corpus or internal product surface.
+
+**1. Define the Operating Model**
+Decide up front:
+- Which document set is in scope for the first rollout
+- whether the first deployment is local-only, Azure-backed, or both
+- which teams will own metadata creation, source-link mapping, and frontend branding
+This prevents RASCAL from being treated as a generic chatbot shell before the knowledge and ownership model are clear.
+
+**2. Establish the Minimum Viable Corpus**
+Start with a bounded, representative set of source documents in `raw/`
+Recommended first pass:
+- 20 to 60 representative documents.
+- current approved versions only
+- a mix of content styles where applicable
+The goal is not maximum coverage on day one. The goal is a clean, reviewable first knowledge layer.
+
+**3. Complete the Required Curation Layers**
+Before presenting the system as a grounded assistant, complete:
+- `metadata_overrides.json` for summaries, key points, relationships, and final type corrections
+- `config/source_url_map.json` for source traceability back to the authoritative document system
+These are the core human-controlled inputs that make the framework reusable and auditable.
+
+**4. Choose the Runtime Path**
+Pick one of these paths deliberately:
+- local scaffold path: fastest for pipeline and UX validation
+- LLM path: use when you need richer compilation or live synthesis
+- Cloud ingestion path: use when you need graph-backed retrieval and cloud-mode behavior
+Do not casually mix these paths in documentation or handoffs. Different teams will care about different prerequisites.
+
+**5. Align the Frontend to the Corpus**
+Before wider rollout, verify that the UI reflects the corpus you loaded:
+- branding and viable labels in `frontend/index.html`
+- category mapping and external links in `frontend/app.js`
+- frontend route contract and white-label checklist in `frontend/FRONTEND-README.md`
+This keeps the framework reusable across areas/units without implying that every deployment shares the same taxonomy or navigation model.
+
+**6. Run an Operator Review Pass**
+Before calling the deployment ready for users:
+- run the pipeline end-to-end
+- inspect wiki output quality
+- ask representative questions in the UI
+- confirm citations resolve to expected source links
+- review feedback and write-back behavior
+This is the practical gate between a technically running system and a trustworthy internal assistant.
+
+
+## Optional Outputs
+At the end of onboarding, you should have:
+- a boudned starter corpus
+- a curated metadata layer
+- a validated source-link map
+- a chosen runtime path with matching environment/configuration
+- a frontend alighned to the target vocabulary
+- two handoff documents kept current: this root README and `frontend/FRONTEND-README.md`
+
+
+## High-Level Architecture
+This framework branch intentionally ships with no prebuilt wiki markdown pages. The wiki/pages content shoe below is runtime-generated from your own corpus and should remain git-ignored
+
+`raw/` → `process_raw_sources.py` + `artifacts/json_output/*.json`  
+↓  
+`wiki_compiler.py`  
+↓  
+`wiki/pages/` \+ `wiki/index.json`  
+↓  
+`graph_api.py` (loads wiki at startup)  
+↓  
+User asks question  
+↓  
+retrieval → LLM synthesis → answer + trace + citations
+
+**At set 1**, `metadata_overrides.json` and `source_url_map.json` are loaded and merged with extracted metadata to enrich the wiki with human judgement.
+
+
+## Data Objects and Terminology
+To keep this README coherent, these terms are used consistantly:
+- Raw/source documents: original input files in `raw/` (ex: DOCX, XLSX, JSON, et al)
+- JSON artifiacts: extracted, structure intermediate files in `artifacts/json_output/`
+- Wiki pages: compiled Markdown knowledge pages in `wiki/pages/`
+
+
+## Canonoical Type Field
+Use types as the canonical document taxonomy field across pipeline stages.
+- Extraction infers type
