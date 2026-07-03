@@ -962,7 +962,26 @@ Browse to http://127.0.0.1:8000
 6) Open Curator Space (Feedback/Triage)
 After the API is running, open Curator Space directly at:
 - http://127.0.0.1:8000/feedback-review
-You can also reach it from the main app shell (/) useing the sidebar link labled **Internal: Curator Space**. That entry intentionally opens in a new tab/window and is styled as a low-emphasis internal contol rather tha a primary end-user action.
+You can also reach it from the main app shell (/) using the sidebar link labeled **Internal: Curator Space**. That entry intentionally opens in a new tab/window and is styled as a low-emphasis internal control rather than a primary end-user action.
 
 What you can do there:
+- review negative feedback queue entries
+- triage to be `resolved`, `proposed_wiki`, or `proposed_override`
+- create wiki drafts from feedback
+- monitor wiki health (freshness + lint)
+- review recent curator audit actions
+If your goal is only to prove the framework works end-to-end locally, the six steps above are enough.
 
+
+## Optional to Customize
+After the framework is running, the most common customization steps are:
+1. Replace the default taxonomy in `metadata_definitions.json` if your corpus is not best described as directive/requirement/procedure/form.
+2. Replace template fallback content in `config/fallback_qa.json` and `config/fallback_templates.json` so low-evidence responses sound like your organization
+3. Add Azure Open AI and Cosmos settings in `.env` when moving from local scaffold mode to LLM or cloud-backed operation.
+4. Repoint pipeline directories or switch modes with `backend/run_pipeline.py` flags if your corpus layout or runtime path differs from the default.
+5. Rebrand the UI and adapt type tabs in `frontend/index.html` and `frontend/app.js` when reusing the framework for another team.
+
+
+## Clone and Customize Handoff (No Bundled Data)
+When stakeholders clone this framework, the fastest path is:
+1.
