@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "defaults": {
+    "language": "en",
+    "visibility": "internal",
+    "weight": 50
+  },
+  "overrides": [
+    {
+      "path": "raw/example-policy.md",
+      "title": "Example Policy",
+      "doc_type": "policy",
+      "source_url": "https://example.com/example-policy",
+      "tags": ["policy", "example"],
+      "weight": 100,
+      "notes": "Replace with real overrides for your corpus"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "mappings": {
+    "raw/example-policy.md": {
+      "source_url": "https://example.com/example-policy",
+      "canonical_id": "example-policy",
+      "publisher": "Example Org"
+    }
+  },
+  "notes": "Map local raw paths to canonical source URLs and IDs. Update per-corpus."
+}
