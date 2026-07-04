@@ -1,11 +1,11 @@
 {
-  "version": 1,
-  "mappings": {
-    "raw/example-policy.md": {
-      "source_url": "https://example.com/example-policy",
-      "canonical_id": "example-policy",
-      "publisher": "Example Org"
-    }
+  "by_doc_id":{
+    "doc_id", "http://wwww.whatever.com/../document.docx"
   },
-  "notes": "Map local raw paths to canonical source URLs and IDs. Update per-corpus."
+    "by_source_file":{
+      "filename.docx":"http://www.whatever.com/../filename.docx"
+  },
+    "by_title":{
+      "Document Title":"http://www.whatever.com/../document.docx"
+  }
 }
