@@ -387,7 +387,7 @@ Everything else in this section is about adaptation, enrichment, or alternate ru
 
 
 ## Optional Enterprise Customization
-These are the main reuse levers when adapting RASCAL for another business unite, area, corpus, or product surface:
+These are the main reuse levers when adapting RASCAL for another business unit, area, corpus, or product surface:
 - taxonomy customization in `metadata_definitions.json`
 - fallback and clarification behavior in `config/fallback_qa.json` and `config/fallback_templates.json`
 - Azure development wiring in `.env`
@@ -441,7 +441,7 @@ These are the main reuse levers when adapting RASCAL for another business unite,
 This section defines how to add concept and metadata nodes in a way that is explainable, repeatable, and explicit about where human curation is required.
 
 **Explainable Processing Contract**
-Fro each ingested document, the system should produce a small processing trace:
+For each ingested document, the system should produce a small processing trace:
 - input document id/title
 - extracted concept candidates
 - emitted metadata nodes
@@ -528,14 +528,14 @@ Human hands are genuinely needed in only one place, and it's outside RASCAL.
 
 **Domain knowledge verification**:
 - The framework cannot verify if a relationship extracted from a policy/source document is *actually* correct in your organization.
-- Example: RASCAL might extract "Policy A requires Policy B" from document text, btut a legal or policy expery needs to confirm that this relationship is *intended* and *accurate* for your operating model
+- Example: RASCAL might extract "Policy A requires Policy B" from document text, but a legal or policy expert needs to confirm that this relationship is *intended* and *accurate* for your operating model
 - If a relationship is wrong, the entire downstream dependency is tainted.
 
 ** How to handle this:**
 1. Run RASCAL extraction (automatic, no review needed)
 2. Operator reads extracted relationships and metadata
 3. **Domain expert reviews and marks as verified** ← This is HITEL
-4. Operator sets `human_reviewed`: true on verified relationships (optional but reccomended for critical paths)
+4. Operator sets `human_reviewed`: true on verified relationships (optional but recommended for critical paths)
 5. Users can then query with `min_confidence` filter to focus on verified chains.
 
 
@@ -605,16 +605,16 @@ This is the practical gate between a technically running system and a trustworth
 
 ## Optional Outputs
 At the end of onboarding, you should have:
-- a boudned starter corpus
+- a bounded starter corpus
 - a curated metadata layer
 - a validated source-link map
 - a chosen runtime path with matching environment/configuration
-- a frontend alighned to the target vocabulary
+- a frontend aligned to the target vocabulary
 - two handoff documents kept current: this root README and `frontend/FRONTEND-README.md`
 
 
 ## High-Level Architecture
-This framework branch intentionally ships with no prebuilt wiki markdown pages. The wiki/pages content shoe below is runtime-generated from your own corpus and should remain git-ignored
+This framework branch intentionally ships with no prebuilt wiki Markdown pages. The wiki/pages content shown below is runtime-generated from your own corpus and should remain git-ignored
 
 `raw/` → `process_raw_sources.py` + `artifacts/json_output/*.json`  
 ↓  
@@ -664,7 +664,7 @@ In short, this project is best understood as an Azure-centric, policy-assistant 
 ## Data Flow Transparency
 **Note:** All file and document names in the section are generic examples. Your actual corpus will have different names, structures, and IDs. The pattern show here apply to any policy/procedure documents you bring, but can be substituted with other data contexts.
 
-**Stage 1: Raw Source Dcouments (`raw/`)
+**Stage 1: Raw Source Documents (`raw/`)
 Input: DOCX, XLSX, PPTX, PDF, HTML, JSON, CSV (user-supplied)
 Example (generic):
 ```
@@ -680,7 +680,7 @@ Process:
 - reads each file in `raw/`
 - extracts content structure (paragraphs, tables, lists, runs)
 - infers document type (directive|requirement|procedure|form|concept|primary source)
-- generated machine readable ID, captures source metadata
+- generated machine-readable ID, captures source metadata
 - scaffolds a stub in `metadata_overrides.json`
 Output: One JSON file per source document
 
@@ -811,7 +811,7 @@ Establisheds the foundations
 - Curator, operator, etc.
 ```
 
-**Stage 5: Runtime Wiki Index (`wiki/index.json`)
+**Stage 5: Runtime Wiki Index (`wiki/index.json`)**
 Process:
 - Built by `wiki_compiler.py` at compile time
 - indexed by the API on startup
@@ -1047,7 +1047,7 @@ RASCAL is meant to be understandable to more than just engineering teams. In Cur
 **Can we trust the knowledge we are using to answer people right now?**
 
 Use this quick translation:
-- State Pages
+- Stale Pages
   - What it means: content may be old or out of sync with source material
   - Why it matters: outdated policy/process content creates wrong answers.
   - What to do: prioritize review of stale pages first.
@@ -1125,12 +1125,12 @@ RASCAL is intentionally not a ChatGPT-style persistent chat product.
  *Mermaid Diagram?*
 
  Flow Highlights:
- - Thumbs up → direct write-bac to wiki (fast path)
+ - Thumbs up → direct write-back to wiki (fast path)
  - Thumbs down → enters triage queue with cited documents and user comment
- - Curator dhasboard (`/feedback-review`) shows pending entries with color-coded status, cited-doc pills, and three actions
+ - Curator dashboard (`/feedback-review`) shows pending entries with color-coded status, cited-doc pills, and three actions
  - Create wiki-draft → generates Markdown in `wiki/pages/curation-drafts/` for human approval before write-back
- - Mark resolved/flag override → routes to operational tracking (not immeidate wiki writes)
-To keep the root README focused on the pipeline and runtume setup, detailed frontend documentation is now maintained in:
+ - Mark resolved/flag override → routes to operational tracking (not immediate wiki writes)
+To keep the root README focused on the pipeline and runtime setup, detailed frontend documentation is now maintained in:
 - `frontend/FRONTEND-README.md`
 That guide covers UI architecture, customization points, type taxonomy mapping, feedback review, and endpoint expectations.
 
@@ -1227,21 +1227,21 @@ As corpus size grows, the effort to keep those two files complete and accurate i
 **Where These References Connect in this README**
 - Trust calibration and uncertainty posture:
   - Framework Branding and Philosophy → Calibrated Trust as the Core Principle
-  - Manifesto (bounded probablistic authority, explainability)
+  - Manifesto (bounded probabilistic authority, explainability)
 - Human governance and operating model:
   - Human Curation Layer → Human Curation and Governance Model
   - Future Enhancements → Team Governance and Identity
 - Ontology and Structure-aware retrieval framing:
   - Feasibility and Fit → Domain-Driven Design: Build Your Own Taxonomies and Ontologies
   - Concept and Metadata Node Framework
-- Knowledge-management fit and implementiion contraints:
+- Knowledge-management fit and implementation constraints:
   - Feasibility and Fit (boundedness, readiness, reviewability)
   - PoC Scope and corpus-size guidance
  
 
 ## Citations
 - Andrej Karpathy. LLM Wiki concept (wiki-first architecture)
-- Pengchen Jiang et al. (2026). RAS: Retrieval-And-Structuring for Knowledge-Intenstive LLM Generation
+- Pengchen Jiang et al. (2026). RAS: Retrieval-And-Structuring for Knowledge-Intensive LLM Generation
 - Megan Leanda Berry. (2025). The Human Layer in GraphRAG: Roles, RACI, and the first 90 Days.
 - Community implementation reference: ScrapingArt/Karpathy-LLM-Wiki-Stack
 - FastAPI documentation
@@ -1249,6 +1249,6 @@ As corpus size grows, the effort to keep those two files complete and accurate i
 - Mojtaba, Rezasi. (2025). Artificial Intelligence in knowledge management: identifying and addressing the key implementation challenges.
 - Amy Turner, Meena Kaushik, Mu-Ti Huang, and Srikar Varanasi. (2024). Calibrating Trust in AI-Assisted Decision Making.
 - Magdalena Wischnewski, Nicole Kramer, and Emmanuel Muller. (2023). Measuring and Understanding Trust Calibrations for Automated Systems: A Survey of the State-of-the-Art and Future Directions.
-- Kartik Sharma, Peeyush Kumar, Yunqig Li. (2024). OG-RAG: Ontology-Grounded Retrieval-Augmented Genreation for Large Language Models
+- Kartik Sharma, Peeyush Kumar, Yunqig Li. (2024). OG-RAG: Ontology-Grounded Retrieval-Augmented Generation for Large Language Models
 - Jinyu Wang, Jingjig Fu, Rui Wang, Lei Song, and Jiang Bian. (2025). PIKE-RAG: sPecialized KnowledgE and Rationale Augmented Generation.
 - Ngoc Luyen Le, Marie-Helene Abel, and Bertrand Laforge. (2026). From Prompts to Context: An Ontology-Driven Framework for Human-Generative AI Collaboration.
