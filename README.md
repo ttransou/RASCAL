@@ -1125,4 +1125,130 @@ RASCAL is intentionally not a ChatGPT-style persistent chat product.
  *Mermaid Diagram?*
 
  Flow Highlights:
+ - Thumbs up → direct write-bac to wiki (fast path)
+ - Thumbs down → enters triage queue with cited documents and user comment
+ - Curator dhasboard (`/feedback-review`) shows pending entries with color-coded status, cited-doc pills, and three actions
+ - Create wiki-draft → generates Markdown in `wiki/pages/curation-drafts/` for human approval before write-back
+ - Mark resolved/flag override → routes to operational tracking (not immeidate wiki writes)
+To keep the root README focused on the pipeline and runtume setup, detailed frontend documentation is now maintained in:
+- `frontend/FRONTEND-README.md`
+That guide covers UI architecture, customization points, type taxonomy mapping, feedback review, and endpoint expectations.
+
+
+## Key Directories
+```
+backend/    # API, retrieval, ingestion, pipeline scripts
+frontend/    # Static HTML/CSS/JS client (no build step)
+config/    # Fallback answers/templates, source URL mapping, schema notes
+metadata_*.json    # Taxonomy definitions and human metadata overrides
+raw/    # Source documents (user supplied, git-ignored in this branch)
+artifacts/    # Generated outputs - json + operational logs (git-ignored)
+wiki/    # Runtime wiki index and page JSON used by the API (git-ignored)
+```
+
+## Framework Docs
+
+*to be added*
+
+
+## Component Guides
+
+*to be added*
+
+
+## POC Scope
+This repo intentionally prioritizes:
+- transparency and grounded behavior
+- deterministic local iteration
+- simple, auditable architecture
+It does not aim to be production-hardened by default.
+
+
+## Corpora That Work Best
+RASCAL performs best when the source corpus is:
+- bounded and intentionally selected, not open-ended or continuously expanding wider than users can track
+- policy/procedure heavy (requirements, directives, SOPs, controls, forms, primary sources, tech specs)
+- semi-structured (clear headings, sections, tables, repeated document patterns)
+- domain-consistent (shared terminology across documents)
+- relatively stable (not changing daily)
+- citation-sensitive (users need traceable source links)
+- ingested deliberately by humans who decide what belongs in the wiki
+Typical strong-fit domains:
+- compliance and risk policy libraries
+- operational procedures and playbooks
+- internal governance frameworks
+- corporate structures: finance, credit, underwriting; legal structures: policies, procedures; academic structures: primary sources, papers
+
+
+## Corpora That Are a Weaker Fit (for this PoC)
+These still can work, but usually need more preprocessing and curation:
+- unbounded corpora that are expected to ingest everything automatically
+- live telemetry, IoT (Internet of Things), event-stream, or operational signal data feeds
+- mostly unstructured narratives with little section hierarchy
+- scanned/image heavy files with poor OCR quality
+- highly conflicting versions of the same policy without a clear source of truth
+- fast-changing corpora where content is updated continuously throughout the day
+- corpora where answers require heavy cross-document reasoning beyond direct grounding
+
+
+## Recommended Number of Source Documents
+
+| `Corpus Size` | `Recommendation for RASCAL PoC` | `Why` |
+| :---- | :---- | :---- |
+| `1 to 10 docs` | `Too small for meaningful retrieval evaluation` | `Better for parser smoke tests than assistant quality` |
+| `20 to 75 docs` | `Best starting range` | `Fast iteration, easy human curation, clear signal on retrieval quality` |
+| `75 to 250 docs` | `Strong PoC range` | `Realistic complexity while still manageable with manual metadata/URL curation` |
+| `250 to 500 docs` | `Upper PoC range` | `Works, but requires disciplined curation and version control` |
+| `500+ docs` | `Beyond comfortable PoC scope` | `Usually needs automation for metadata governance and source mapping` |
+
+Practical guidance:
+- If this is your first run, target 30 to 60 representative documents
+- Include a mix of document patterns/types
+- Avoid loading every historical version initially; prefer current approved documents
+- Treat corpus expansion as a curation step: add documents intentionally, rebuild, then review the wiki output
+
+
+## Why Corpus Size Matters
+The core pipeline is automated, but quality still depends on human curation in:
+- `metadata_overrides.json`
+- `config/source_url_map.json`
+This PoC assumes wiki ingestion is deliberate rather than ambient. Humans select which source documents to place in `raw/`, review the generated artifacts, and curate the metadata layer before treating the corpus as part of the assistant's knowledge base.
+
+As corpus size grows, the effort to keep those two files complete and accurate increases as well. That is the main scaling limiter in this PoC, not extraction speed.
+
+
+
+## Future Enhancements
+
+*moved to its own documentation*
+
+
+## References
+**Where These References Connect in this README**
+- Trust calibration and uncertainty posture:
+  - Framework Branding and Philosophy → Calibrated Trust as the Core Principle
+  - Manifesto (bounded probablistic authority, explainability)
+- Human governance and operating model:
+  - Human Curation Layer → Human Curation and Governance Model
+  - Future Enhancements → Team Governance and Identity
+- Ontology and Structure-aware retrieval framing:
+  - Feasibility and Fit → Domain-Driven Design: Build Your Own Taxonomies and Ontologies
+  - Concept and Metadata Node Framework
+- Knowledge-management fit and implementiion contraints:
+  - Feasibility and Fit (boundedness, readiness, reviewability)
+  - PoC Scope and corpus-size guidance
  
+
+## Citations
+- Andrej Karpathy. LLM Wiki concept (wiki-first architecture)
+- Pengchen Jiang et al. (2026). RAS: Retrieval-And-Structuring for Knowledge-Intenstive LLM Generation
+- Megan Leanda Berry. (2025). The Human Layer in GraphRAG: Roles, RACI, and the first 90 Days.
+- Community implementation reference: ScrapingArt/Karpathy-LLM-Wiki-Stack
+- FastAPI documentation
+- Louafi, Bilal; Nessah, Dhamel; and Meheleain, Ridha. (2025). AI-Based Knowledge Management Systems: A Review of AI Techniques, Applications, and Challenges.
+- Mojtaba, Rezasi. (2025). Artificial Intelligence in knowledge management: identifying and addressing the key implementation challenges.
+- Amy Turner, Meena Kaushik, Mu-Ti Huang, and Srikar Varanasi. (2024). Calibrating Trust in AI-Assisted Decision Making.
+- Magdalena Wischnewski, Nicole Kramer, and Emmanuel Muller. (2023). Measuring and Understanding Trust Calibrations for Automated Systems: A Survey of the State-of-the-Art and Future Directions.
+- Kartik Sharma, Peeyush Kumar, Yunqig Li. (2024). OG-RAG: Ontology-Grounded Retrieval-Augmented Genreation for Large Language Models
+- Jinyu Wang, Jingjig Fu, Rui Wang, Lei Song, and Jiang Bian. (2025). PIKE-RAG: sPecialized KnowledgE and Rationale Augmented Generation.
+- Ngoc Luyen Le, Marie-Helene Abel, and Bertrand Laforge. (2026). From Prompts to Context: An Ontology-Driven Framework for Human-Generative AI Collaboration.
