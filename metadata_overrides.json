@@ -1,19 +1,16 @@
 {
-  "version": 1,
-  "defaults": {
-    "language": "en",
-    "visibility": "internal",
-    "weight": 50
-  },
-  "overrides": [
-    {
-      "path": "raw/example-policy.md",
-      "title": "Example Policy",
-      "doc_type": "policy",
-      "source_url": "https://example.com/example-policy",
-      "tags": ["policy", "example"],
-      "weight": 100,
-      "notes": "Replace with real overrides for your corpus"
+  "documents":{
+    "doc_id_or_title":{
+      "summary":"Human-written summary of this document's purpose and scope.",
+      "key_points":[
+        "Point 1: What users must understand.",
+        "Point 2: Critical rule or constraint.",
+      ],
+      "relationships":[
+      "requires":["ref_to_prerequisite_doc"],
+      "depends_on":["ref_to_parent_policy"],
+      "related_to":["ref_to_sibling_concept"]
+      }
     }
-  ]
+  }
 }
