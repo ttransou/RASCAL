@@ -78,7 +78,7 @@ Reduce the manual effort per feedback entry, e.g., by generating suggested edits
 Draft suggested summaries, key points, and relationships from the extracted JSON for human review and approval. The framework already has the extraction layer; this closes the gap that makes `metadata_overrides.json` feel like homework. Instead of authoring overrides from scratch, curators confirm, edit, or reject LLM-drafted proposals.
 
 
-🛠 ** Structured wiki diff on re-run:**
+🛠 **Structured wiki diff on re-run:**
     
 When source documents update and the pipeline re-runs, produce a per-page diff of what changed so curators review only the delta rather than the full page. Pairs naturally with stale-page detection; the queue item arrives with the diff already attached.
 
