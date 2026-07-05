@@ -1,0 +1,18 @@
+{
+  "sections": [
+    {
+      "title": "Getting started",
+      "entries": [
+        {"question": "What is RASCAL?", "answer": "A wiki-first assistant that surfaces retrieval traces, citations, and feedback-driven write-back."},
+        {"question": "How should I use this UI?", "answer": "Ask a question, inspect the evidence, and decide whether the answer should become a reusable wiki page."}
+      ]
+    },
+    {
+      "title": "Curator workflow",
+      "entries": [
+        {"question": "How do I improve the knowledge base?", "answer": "Use feedback to mark weak answers, then promote strong ones into the wiki with Save to Wiki."},
+        {"question": "What should I review first?", "answer": "Start with stale pages, repeated downvotes, and missing policy coverage."}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RASCAL | Transparent Wiki Assistant</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="left-panel">
+        <div class="brand-card">
+          <div class="brand-mark">R</div>
+          <div>
+            <h1>RASCAL</h1>
+            <p>Transparent wiki-first assistant</p>
+          </div>
+        </div>
+
+        <button id="themeToggle" class="ghost-btn" type="button">🌓 Theme</button>
+
+        <nav class="left-nav" aria-label="Primary">
+          <button class="nav-btn active" data-view="chat" type="button">💬 Chat</button>
+          <button class="nav-btn" data-view="catalog" type="button">📚 Wiki Catalog</button>
+          <button class="nav-btn" data-view="faq" type="button">❓ FAQ</button>
+          <a class="nav-btn external" href="/graph-map" target="_blank" rel="noreferrer">🗺️ Relationship Map</a>
+          <a class="nav-btn external" href="/feedback-review" target="_blank" rel="noreferrer">🧭 Curator Space</a>
+        </nav>
+
+        <div class="status-card">
+          <div class="status-row">
+            <span class="pill-label">Health</span>
+            <span id="healthPill" class="pill healthy">Checking…</span>
+          </div>
+          <p id="healthSummary" class="status-text">The local UI is warming up.</p>
+        </div>
+      </aside>
+
+      <main class="center-panel">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">RASCAL operating surface</p>
+            <h2>Grounded answers with visible evidence</h2>
+          </div>
+          <div class="topbar-meta">
+            <span class="meta-pill" id="modeBadge">mode: local</span>
+            <span class="meta-pill" id="groundingBadge">grounding: wiki-first</span>
+          </div>
+        </header>
+
+        <section class="composer-card">
+          <form id="askForm" class="composer-form">
+            <label class="sr-only" for="questionInput">Ask a question</label>
+            <input id="questionInput" name="question" type="text" placeholder="Ask about policy, procedures, or concepts…" autocomplete="off" required />
+            <button type="submit">Ask</button>
+          </form>
+          <p class="composer-hint">Answers are framed with retrieval evidence and citations so the workflow stays explainable.</p>
+        </section>
+
+        <section class="viewport-card">
+          <div class="view-tabs" role="tablist" aria-label="UI views">
+            <button class="tab-btn active" data-view="chat" type="button">Conversation</button>
+            <button class="tab-btn" data-view="catalog" type="button">Wiki Catalog</button>
+            <button class="tab-btn" data-view="faq" type="button">FAQ</button>
+          </div>
+
+          <div id="chatView" class="view-pane">
+            <div id="conversation" class="conversation-list"></div>
+          </div>
+
+          <div id="catalogView" class="view-pane hidden">
+            <div class="catalog-toolbar">
+              <div class="category-filters" id="categoryFilters"></div>
+              <label class="search-field">
+                <span class="sr-only">Search the wiki catalog</span>
+                <input id="searchInput" type="search" placeholder="Search title, type, or summary" />
+              </label>
+            </div>
+            <div id="catalogList" class="catalog-list"></div>
+          </div>
+
+          <div id="faqView" class="view-pane hidden">
+            <div id="faqContent" class="faq-content"></div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right-panel">
+        <div class="panel-header">
+          <h3>Trace & provenance</h3>
+          <span class="pill-label">evidence</span>
+        </div>
+        <div id="traceContent" class="trace-content">
+          <p class="empty-state">Ask a question to inspect retrieved wiki chunks, scores, and citations.</p>
+        </div>
+      </aside>
+    </div>
+
+    <div id="wikiModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <button id="closeModal" class="ghost-btn" type="button">Close</button>
+        <div id="wikiModalContent"></div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

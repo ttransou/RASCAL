@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RASCAL | Relationship Map</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .graph-shell { padding: 1.2rem; display: grid; gap: 1rem; }
+      .graph-card { background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 1rem; }
+      .graph-toolbar { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; justify-content: space-between; }
+      .graph-canvas { width: 100%; min-height: 420px; border-radius: 18px; background: linear-gradient(180deg, rgba(94,234,212,0.08), transparent); border: 1px solid var(--border); overflow: auto; }
+      .graph-canvas svg { width: 100%; min-height: 420px; }
+      .legend { display: flex; gap: 0.6rem; flex-wrap: wrap; color: var(--muted); font-size: 0.9rem; }
+      .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+      .legend i { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <div class="graph-shell">
+      <div class="graph-card">
+        <div class="graph-toolbar">
+          <div>
+            <p class="eyebrow">Relationship transparency</p>
+            <h2>Knowledge graph view</h2>
+          </div>
+          <div class="topbar-meta">
+            <button id="themeToggle" class="ghost-btn" type="button">🌓 Theme</button>
+            <a class="ghost-btn" href="/">Back to chat</a>
+          </div>
+        </div>
+        <div class="graph-toolbar">
+          <label>
+            <span class="pill-label">Preset</span>
+            <select id="presetSelect">
+              <option value="document-only">Document-only</option>
+              <option value="full-structure">Full structure</option>
+            </select>
+          </label>
+          <label>
+            <span class="pill-label">Filter</span>
+            <select id="filterSelect">
+              <option value="all">All nodes</option>
+              <option value="policy">Policies</option>
+              <option value="concept">Concepts</option>
+            </select>
+          </label>
+          <span id="statusText" class="meta-pill">Templated graph scaffold</span>
+        </div>
+      </div>
+
+      <div class="graph-card">
+        <div class="legend">
+          <span><i style="background:#5eead4"></i> document</span>
+          <span><i style="background:#8b5cf6"></i> concept</span>
+          <span><i style="background:#f59e0b"></i> relationship</span>
+        </div>
+        <div id="graphCanvas" class="graph-canvas"></div>
+      </div>
+    </div>
+
+    <script src="/graph_map.js"></script>
+  </body>
+</html>

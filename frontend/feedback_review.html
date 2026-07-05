@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RASCAL | Curator Space</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .review-shell { display: grid; gap: 1rem; padding: 1.2rem; }
+      .review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+      .review-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 1rem; }
+    </style>
+  </head>
+  <body>
+    <div class="review-shell">
+      <div class="review-card">
+        <p class="eyebrow">Curator space</p>
+        <h2>Feedback review and knowledge health</h2>
+        <p class="status-text">This surface is intentionally lightweight but ready to be extended with live review and triage data.</p>
+      </div>
+      <div class="review-grid">
+        <div class="review-card">
+          <h3>Negative feedback queue</h3>
+          <p class="status-text">No live feedback stream yet. The workflow is scaffolded for future triage integration.</p>
+        </div>
+        <div class="review-card">
+          <h3>Wiki freshness</h3>
+          <p class="status-text">The catalog and content model are ready for curated review alerts and recertification loops.</p>
+        </div>
+        <div class="review-card">
+          <h3>Audit trail</h3>
+          <p class="status-text">Save-to-wiki and feedback events can be surfaced here as the workflow matures.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
