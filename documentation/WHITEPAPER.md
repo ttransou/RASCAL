@@ -1,8 +1,12 @@
 # RASCAL - Retrieval Augmented Semantic Calibrated Active Learning
 **A White Paper on Grounded, Governed, and Compounding Knowledge Systems
+
 *T. Transou, 05/11/2026*
+
 *Version 1.0*
-*Status: Publication ready draft*
+
+*Status: Publication-ready draft*
+
 *Audience: Architects, domain owners, AI governance stakeholders, technical sponsors, and implementers
 
 
@@ -43,7 +47,7 @@ RASCAL begins where those frictions become visible. It assumes that in many boun
 That design choice changes the character of the system. It changes what is stored, what is queried, what is governed, and what is allowed to improve over time. It also changes what success looks like. Success is no longer measured only by whether a model can answer a question today. It is measured by whether the knowledge system becomes more coherent, more trustworthy, and more useful with continued use and stewardship.
 
 
-## The RASCAL Thesis
+## 2. The RASCAL Thesis
 
 RASCAL stands for **Retrieval Augmented Semantic Calibrated Active Learning**, but the acronym is best understood not as a label but as a compact statement of intent.
 
@@ -101,7 +105,7 @@ The second is **structured intermediate knowledge**. The framework is directiona
 
 The third is **calibrated trust**. RASCAL treats uncertainty honestly. Extracted and curated knowledge is not conflated. Provisional and approved metadata are not treated as equivalent. Relationships can carry weights, confidence values, provenance markers, extraction methods, and review flags. This allows both operators and downstream retrieval logic to distinguish weakly supported associations from reviewed, high-confidence ones.
 
-The fourth is **human stewardship.** This framework automates the mechanical, repeatable tasks, but it preserves human judgment where meaning and risk are genuinely domain-specific. Metadata overrides, source URL mappings, concept merges, relationship validation, and confidence elevation all belong within this governance space.
+The fourth is **human stewardship.** This framework automates mechanical, repeatable tasks while preserving human judgment where meaning and risk are genuinely domain-specific. Metadata overrides, source URL mappings, concept merges, relationship validation, and confidence elevation all belong within this governance space.
 
 The fifth is **domain adaptability **. RASCAL does not impose a single ontology across all corpora. Document taxonomies, relationship semantics, metadata structures, and fallback behaviors are defined in configuration rather than hardwired into the code. The framework provides machinery. The corpus proves meaning.
 
@@ -112,7 +116,7 @@ RASCAL adapts to the corpus's ontology. The corpus does not need to adapt to a f
 
 ## 6. The Knowledge Lifecycle
 
-The easiest way to understand RASCAL operationally is to see it as a lifecycle rather than as a chat interface. The system begins with a bounded set of source documents in `raw/`. Those documents are processed into JSON artifacts that capture content structure, identifiers, inferred document type, and source metadata. Human curation then refines the machin-produced layer through `metadata_overrides.json` and `config/source_url_map.json` (specifically important for objects in places like SharePoint or similar cloud based formats), enriching summaries, key points, relationships, and authoratative source links.
+The easiest way to understand RASCAL operationally is to see it as a lifecycle rather than as a chat interface. The system begins with a bounded set of source documents in `raw/`. Those documents are processed into JSON artifacts that capture content structure, identifiers, inferred document type, and source metadata. Human curation then refines the machine-produced layer through `metadata_overrides.json` and `config/source_url_map.json` (specifically important for objects in places like SharePoint or similar cloud-based formats), enriching summaries, key points, relationships, and authoritative source links.
 
 From there, RASCAL compiles a persistent wiki layer. Markdown pages are generated and indexed, forming a maintained representation of the corpus that is readable both by users and the retrieval system. If graph ingestion is enabled, documents, chunks, and relationships are persisted into Cosmos DB using a graph-shaped data model. At runtime, the system can retrieve relevant wiki pages and chunks, optionally follow graph neighbors, and return answers with traceability and citations. Finally, user feedback can be captured and, when valuable, written back into the wiki so that the corpus improves through use.
 
@@ -130,7 +134,6 @@ graph TD
     I -- Write-back --> C
     I -- Improve --> C
 
-Figure 1. End-to-End RASCAL Knowledge Lifecycle
 
 
 ## 7. Human Governance as Architectural Principle
@@ -165,12 +168,12 @@ The graph model described in ARCHITECTURE.md uses Azure Cosmos DB NoSQL to imple
 
 At the base of the graph are document nodes and chunk nodes. Document nodes carry identity, type, summary, key points, source lineage, embeddings, and update timestamps. Chunk nodes represent semantically coherent segments used for retrieval and sequential traversal. In a later development phase, concept nodes and metadata nodes further extend the model, enabling the persistent representation of cross-document entities, policy terms, taxonomy elements, authorship, version labels, approval records, and other contextual attributes.
 
-The graph matters because questions often depend on explicit structure. Policies require prerequisites; procedures depend on governing directives... one document supersedes another; terms are defined in one place and used elsewhere; version chains matter, etc. Cross-document interpretation often depends on this structure being preserved, not guessed.
+The graph matters because questions often depend on explicit structure. Policies require prerequisites; procedures depend on governing directives... one document supersedes another; terms are defined in one place and used elsewhere; version chains matter, etc. Cross-document interpretation often depends on this structure being preserved rather than guessed.
 
 In this sense, the graph layer is not an optional flourish. It is the mechanism by which institutional knowledge becomes traversable rather than merely searchable.
 
 
-## Edge Semantics, Bidirectionality, and Explainability
+## 10. Edge Semantics, Bidirectionality, and Explainability
 
 A particularly important design choice in the graph model is the explicit bidirectional storage of edges. Every relationship is written in both directions. If one document requires another, the reverse relation is stored as `required_by`. If one document supersedes another, the reverse is stored as `superseded_by`. Self-inverse relationships such as `related_to` remain symmetrical.
 
@@ -199,7 +202,6 @@ graph TD
     H -- bidirectional --> D
     I -- self inverse --> I
 
-Figure #. Bidirectional edge strategy for efficient forward and reverse lookup
 
 Yet the importance of edges in RASCAL goes beyond connectivity. Edges are treated as governed assertions. Each edge can carry `weight`, `confidence`, `provenance`, `extraction_method`, `human_reviewed`, and optional temporal attributes such as `effective_date` and `depreciated_date`. This means the framework can preserve not only that a relationship exists, but also how strongly it is supported, how it was derived, and whether it has been verified.
 
@@ -208,7 +210,7 @@ That design creates a richer and more honest trust model. A weak NLP-extracted a
 Explainability, in other words, is carried in the edge model itself.
 
 
-## The Trust Model
+## 11. The Trust Model
 
 Trust in RASCAL is not a rhetorical aspiration. It is encoded in the data architecture and the operating process.
 
@@ -247,7 +249,7 @@ This design principle becomes especially clear in the move toward a config-drive
 As described in GRAPH_UPDATES.md, edge types are now loaded from `metadata_definitions.json` at startup rather than being hardcoded. This prevents silent failures on unknown types, allows domain-specific defaults for weight and confidence, and makes the pipeline more portable across corpora. The registry itself thus becomes part of the framework's ontology contract.
 
 
-## Runtime Behavior and Retrieval Posture
+## 14. Runtime Behavior and Retrieval Posture
 
 At runtime, RASCAL remains faithful to its bounded knowledge posture. The system loads the compiled wiki representation, retrieves relevant documents and chunks, optionally expands context through graph neighbors, and returns an answer with citations and traceability. In local and cloud variants, different runtime paths are supported, including local wiki mode, retrieval-only mode, Azure-backed synthesis, Cosmos-backed graph retrieval, and optional Blob-backed persistence.
 
@@ -276,13 +278,13 @@ This loop is not a peripheral convenience. It is the mechanism by which the know
 That is a profoundly different model of learning from the one implied by generic chat systems. It is not model-centric learning. It is institutional learning.
 
 
-## Data Model as View of Knowledge
+## 17. Data Model as View of Knowledge
 
 RASCAL's data model encodes a theory of knowledge, whether it says so explicitly or not. Documents are treated as first-class objects with identity, type, source lineage, summary, key points, and relationships. Chunks are treated as retrieval units rather than isolated truth claims. Concepts and metadata, though optional in later phases, extend the graph into more durable semantic and operational forms. Edges are not merely implementation artifacts but assertions whose provenance and confidence can be interrogated.
 
 This model resists a common flattening tendency in AI systems. It does not reduce knowledge to a bag of semantically indexed paragraphs. Instead, it preserves the distinctions between source authority, retrieval convenience, semantic continuity, and institutional context.
 
-Such distinctions matter precisedly because organizaitons depend on them in practice. A chunk may retrieve well, but only a document has a version, an owner, a source file, and a governance context. A concept may recur across multiple documents even when no single chunk adequately captures its role. A metadata node may express approval status or taxonomy placement that changes how a document should be interpreted. A relationship may exist, but its confidence and provenance determine how heavily it should influence an answer.
+Such distinctions matter precisely because organizations depend on them in practice. A chunk may retrieve well, but only a document has a version, an owner, a source file, and a governance context. A concept may recur across multiple documents even when no single chunk adequately captures its role. A metadata node may express approval status or taxonomy placement that changes how a document should be interpreted. A relationship may exist, but its confidence and provenance determine how heavily it should influence an answer.
 
 The framework's schema is therefor not only a technical implementation, it is a disciplined refusla to pretend all knowledge is interchangable once embedded.
 
