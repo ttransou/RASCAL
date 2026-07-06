@@ -10,6 +10,16 @@ This file tracks implementation work and documentation updates so the repo stays
 ## In Progress
 - [ ] README consistency pass against implemented backend and frontend routes/scripts
 
+## Highest Priority Reimplementation
+These items are documented as core RASCAL behavior in `README.md` and `documentation/`, but the current branch only has scaffold/demo implementations or placeholders.
+
+- [x] Reimplement real wiki-backed API behavior: make `/wiki_index`, `/wiki/{page_id}`, `/ask`, `/graph_map_data`, `/feedback`, and `/wiki` read from and write to actual local artifacts instead of hardcoded demo payloads.
+- [x] Reimplement the retrieval layer: replace `backend/retrieval.py` placeholder behavior with local wiki/document retrieval, ranking, trace generation, and citation payload assembly.
+- [ ] Reimplement feedback and write-back persistence: store feedback events, persist saved analysis/wiki draft pages, refresh the wiki catalog after write-back, and ensure written pages can re-enter retrieval.
+- [ ] Reimplement Curator Space backend routes: add `/feedback-data`, `/feedback-triage`, `/feedback-propose-wiki`, `/triage_audit`, `/wiki_freshness`, `/lint/document`, `/cascade_status`, `/query_telemetry_summary`, `/graph_analytics_summary`, and `/wiki_mark_reviewed` or downgrade docs until those routes exist.
+- [ ] Fix and wire source traceability: make `config/source_url_map.json` valid JSON, load it in backend responses, and surface canonical source URLs in citations/UI.
+- [ ] Reimplement relationship metadata and HITL edge semantics: support rich relationship objects with `target`, `weight`, `confidence`, `human_reviewed`, and `provenance`, including default strength rules and reviewed-vs-provisional behavior.
+
 ## Environment Reliability
 - [x] Install and verify ingestion dependencies in project `.venv`
 - [ ] Add an explicit docs note: run backend Python commands with `/workspaces/RASCAL/.venv/bin/python` (or activate `.venv`) to avoid missing-package errors
