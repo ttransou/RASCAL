@@ -119,13 +119,13 @@ For each dimension (value + readiness), discuss:
 3. Set up feedback loops so answers improve over time
 4. Plan metrics to track reuse, time saved, and citation accuracy
 
-**If Conditional (score 24-31, or mixed signals)
+**If Conditional (score 24-31, or mixed signals)**
 1. Run a time-boxed pilot (2-4 weeks) on a subset of the knowledge
 2. Build a minimal wiki and test retrieval quality on real user questions
 3. Measure and decide: Did it reduce research time? Improve answer quality?
 4. If the pilot succeeds, commit to full rollout; if not, reconsider priorities
 
-**If No-Go (score <24, or low value + low readiness)
+**If No-Go (score <24, or low value + low readiness)**
 1. Consider alternative solutions: better documentation practices, searchable index, knowledge graph for relationships
 2. Revisit in 6-12 months after domain improvements
 3. Use this assessment to drive the roadmap: define what readiness and value improvements would make it viable
