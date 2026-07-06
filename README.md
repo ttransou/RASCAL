@@ -4,13 +4,23 @@
 T. Transou - June 2026 - 🚧 Active Development 🚧
 
 
-**Conceptual lineage:** This repo was originally an Azure-stack iteration of Andrej Karpathy's LLM Wiki gist. It follows the same wiki-first grounding idea, but adapts it to an Azure-oriented runtime, pipeline, and retrieval pattern. It is also directionally aligned with retrieval-and-structuring research, such as RAS (Retrieval-And-Structuring for Knowledge-Intensive LLM Generation), particularly in its emphasis on structured intermediate knowledge over flat passage-only retrieval.
+**Conceptual lineage:** This repo began as an Azure-stack iteration of Andrej Karpathy's LLM Wiki gist. It now keeps the same wiki-first grounding idea while moving toward a **local-first, provider-open framework**: the baseline runs on local files, local Markdown wiki output, local JSON artifacts, and deterministic retrieval, while cloud, model, vector, graph, and enterprise systems remain optional adapters. It is also directionally aligned with retrieval-and-structuring research, such as RAS (Retrieval-And-Structuring for Knowledge-Intensive LLM Generation), particularly in its emphasis on structured intermediate knowledge over flat passage-only retrieval.
 
 RASCAL is a lightweight, wiki-first framework for building grounded assistants over **bounded, curated document corpora** with transparent retrieval and traceable citations.
 
 **Basic Premise:** Instead of forcing the model to rediscover raw documents for every question, this repo compiles source material into a persistent wiki-shaped knowledge layer that can be reviewed, curated, and reused.
 
-**Purpose:** This repository is the reusable Azure-stack baseline for that pattern. It is intentionally framework-only and does not ship bundled domain data. Any raw/sources markdown belongs to the source corpus you bring into the framework, not to the framework itself. The goal is to provide the extraction pipeline, wiki compilation flow, retrieval surface, and UI/API scaffolding needed to turn a curated corpus into an explainable assistant.
+**Purpose:** This repository is the reusable baseline for that pattern. It is intentionally framework-only and does not ship bundled domain data. Any raw/sources markdown belongs to the source corpus you bring into the framework, not to the framework itself. The goal is to provide the extraction pipeline, wiki compilation flow, retrieval surface, and UI/API scaffolding needed to turn a curated corpus into an explainable assistant without requiring a specific cloud provider, model vendor, vector database, or enterprise identity stack.
+
+**Local-first and provider-open:** RASCAL's core should work with no cloud control plane:
+- local source files in `raw/`
+- local extraction artifacts in `backend/json/`
+- local Markdown wiki pages in `backend/wiki/`
+- local deterministic retrieval through `backend/retrieval.py`
+- local API/frontend runtime through `backend/api.py` and `frontend/`
+- local feedback/write-back artifacts as the starter persistence model
+
+Provider integrations are allowed, but they are adapters rather than prerequisites. Useful open/local adapters may include SQLite or DuckDB for local persistence, Chroma/Qdrant/LanceDB for vector search, NetworkX or JSON graph files for graph exploration, Ollama/LM Studio/OpenAI-compatible local servers for optional synthesis, and GitHub/Obsidian/Google Drive export workflows for source movement. Enterprise adapters may include Azure OpenAI, Azure Blob, Cosmos DB, Entra ID, SharePoint, Teams, Confluence, or internal governed APIs.
 
 **Customization by design:** you are not locked into predefined taxonomies or relationship types. For each corpus, you define the document types, relationship semantics, and metadata structures that reflect your domain's actual knowledge model. In short, JSON config files, not code. Whether you ingest policy/compliance documents, technical specifications, operational procedures, or the complete works of Seneca the Younger, the framework adapts to your ontology, not the other way around.
 
@@ -25,7 +35,7 @@ This also aligns with recent evidence that retrieval-only pipelines are often in
 > "This is the key difference: the wiki is a persistent, compounding artifact."
 > -- Andrej Karpathy, LLM Wiki (cited in References)
 
-This follows the same high-level idea described in Karpathy's LLM Wiki gist: the knowledge base is a compounding artifact, not just a transient retrieval target. Here, that idea is implemented for bounded corpora (previously enterprise-level) with explicit ingestion, deterministic compilation paths, and Azure-oriented runtime patterns.
+This follows the same high-level idea described in Karpathy's LLM Wiki gist: the knowledge base is a compounding artifact, not just a transient retrieval target. Here, that idea is implemented for bounded corpora with explicit ingestion, deterministic compilation paths, and adapter-friendly runtime boundaries.
 
 
 ## Human Curation Marker 🧠
@@ -89,8 +99,8 @@ With that philosophy in mind, the next section clarifies explicit boundaries to 
 
 
 ## Out of Scope (To Avoid Confusion) 😖
-The implementation is intentionally bounded; it is not designed as a general agent framework or a model-agnostic chatbot.
-- No Claude usage: this repo does not use Claude models in pipeline or runtime behavior. When Claude becomes more affordable for organizations and individual users, it may be a consideration for RASCAL.
+The implementation is intentionally bounded; it is not designed as a general agent framework or a general-purpose chatbot.
+- No required named model vendor: the local-first baseline does not require Claude, OpenAI, Azure OpenAI, or any hosted LLM. Model-backed synthesis can be added later through optional adapters.
 - No autonomous multi-agent orchestration: this is a single assistant, pipeline-driven system. The use of agents may be considered later, once the baseline MVP is proven and security concerns are analyzed.
 - No open-domain assistant behavior: responses are grounded in a bounded, curated corpus with traceability.
 - No chat-over-anything posture: ingestion and answer quality depend on structured artifacts plus human curation.
@@ -300,17 +310,26 @@ See `metadata_overrides.json` for framework-ready example entries covering:
 
 ```json
 {
-  "documents":{
-    "doc_id_or_title":{
-      "summary":"Human-written summary of this document's purpose and scope.",
-      "key_points":[
+  "documents": {
+    "doc_id_or_title": {
+      "summary": "Human-written summary of this document's purpose and scope.",
+      "human_reviewed": false,
+      "key_points": [
         "Point 1: What users must understand.",
-        "Point 2: Critical rule or constraint.",
+        "Point 2: Critical rule or constraint."
       ],
-      "relationships":[
-      "requires":["ref_to_prerequisite_doc"],
-      "depends_on":["ref_to_parent_policy"],
-      "related_to":["ref_to_sibling_concept"]
+      "relationships": {
+        "requires": ["ref_to_prerequisite_doc"],
+        "depends_on": ["ref_to_parent_policy"],
+        "related_to": [
+          {
+            "target": "ref_to_sibling_concept",
+            "weight": 0.6,
+            "confidence": 0.65,
+            "human_reviewed": true,
+            "provenance": "curator"
+          }
+        ]
       }
     }
   }
@@ -323,11 +342,9 @@ See `metadata_overrides.json` for framework-ready example entries covering:
 - `relationships.depends_on`: docs that this one supersedes or refines
 - `relationships.related_to`: docs with tangential relevance
 You can provide relationship links in either form:
-- simple string form (backward compatible):
-  - "requires": ["doc_b", "doc_c"]
-- rich object form (recommended for curation-aware graph edges):
-  - "requires": [{"target":"doc_b","weight":0.95, "confidence": 1.0, "human_reviewed":true, "provenance":"curated"}]
-When object form is used, ingestion preserves link-level metadata on the edge record (weight, confidence, human_reviewed, provenance, optional labels, and dates).
+- simple string form, which is backward compatible: `"requires": ["doc_b", "doc_c"]`
+- rich object form, which is recommended for curation-aware graph edges: `"requires": [{"target": "doc_b", "weight": 0.95, "confidence": 1.0, "human_reviewed": true, "provenance": "curated"}]`
+When object form is used, compilation preserves link-level metadata on the edge record: `target`, `weight`, `confidence`, `human_reviewed`, `provenance`, and `review_state`.
 
 If simple string form is used, RASCAL defaults apply by relationship type:
 - `requires`: strongest defaults (weight=1.0, confidence=0.95)
@@ -339,6 +356,7 @@ HITL gating behavior:
 - before HITL review, relationship links are treated as provisional and stored with neutral strength (weight=0.5, confidence=0.5)
 - After HITL review is marked complete ("human_reviewed": true at document override level, or per-link), semantic tier strengths are applied automatically.
 - custom per-link weight/confidence are only honored after HITL review (document-level or per-link)
+- `/graph_map_data` exposes these fields directly, and the graph UI renders reviewed edges as solid links and provisional edges as dashed links.
 
 Framework requirement for all adopters:
 - Each team must define its own dataset policy for what qualifies as `requires`, `depends_on`, and `related_to`
@@ -351,14 +369,14 @@ Framework requirement for all adopters:
 ## Source URL Map Structure
 ```json
 {
-  "by_doc_id":{
-    "doc_id", "http://wwww.whatever.com/../document.docx"
+  "by_doc_id": {
+    "doc_id_or_wiki_page_id": "https://example.org/source-system/document"
   },
-    "by_source_file":{
-      "filename.docx":"http://www.whatever.com/../filename.docx"
+  "by_source_file": {
+    "filename-or-relative-path.ext": "https://example.org/source-system/document"
   },
-    "by_title":{
-      "Document Title":"http://www.whatever.com/../document.docx"
+  "by_title": {
+    "Document Title": "https://example.org/source-system/document"
   }
 }
 ```
@@ -369,13 +387,21 @@ How to fill it in:
 - users see the source URL in the frontend (example: "View in Sharepoint/Drive" link)
 - All three indexes point to the same upstream documents and pick whichever keys make sense for your corpus.
 
+Current local resolution order:
+1. `by_doc_id` using the wiki page/document ID
+2. `by_source_file` using the stored source file path
+3. `by_source_file` using only the source filename
+4. `by_title` using the wiki page title
+
+Resolved URLs are included in wiki catalog records, wiki page payloads, retrieval trace citations, and frontend citation links.
+
 
 ## Configuration and Customization Surfaces
 **This section defines where you inject domain knowledge.**
 
 RASCAL carefully distinguishes between framework infrastructures (the code and structure that remain constant across deployments) and domain customization (the vocabularies, definitions, and business/schema rules that change with each corpus).
 
-For enterprise reuse, it helps to separate what you must provide to get the framework running from what you may customize to adapt it to a new domain, operating model, or UI.
+For reuse across local, open-tool, or enterprise environments, it helps to separate what you must provide to get the framework running from what you may customize to adapt it to a new domain, operating model, or UI.
 
 
 ## Required to Run vs. Optional to Customize
@@ -400,8 +426,8 @@ For the smallest credible local run, you need only:
 Everything else in this section is about adaptation, enrichment, or alternate runtime paths.
 
 
-## Optional Enterprise Customization
-These are the main reuse levers when adapting RASCAL for another business unit, area, corpus, or product surface:
+## Optional Provider and Product Customization
+These are the main reuse levers when adapting RASCAL for another team, public/open-tool workflow, local lab environment, business unit, area, corpus, or product surface:
 - metadata curation in `metadata_overrides.json`
 - source traceability mapping in `config/source_url_map.json`
 - ingestion/compilation pathing with `backend/process_raw_sources.py` and `backend/wiki_compiler.py`
@@ -411,7 +437,7 @@ These are the main reuse levers when adapting RASCAL for another business unit, 
 | File/Surface | What it controls | Typical customization |
 | :---- | :---- | :---- |
 | `metadata_overrides.json` | Per-document human curation and default metadata | Add summaries, key points, relationships, and final type overrides |
-| `config/source_url_map.json` | Source-document links used in citations and UI | Point citations to SharePoint, Drive, etc., file portals, or document systems |
+| `config/source_url_map.json` | Source-document links used in citations and UI | Point citations to local files, GitHub, Obsidian exports, Google Drive, SharePoint, Drive, file portals, or document systems |
 | `backend/process_raw_sources.py` + `backend/wiki_compiler.py` | Ingestion and wiki compilation orchestration | Control source path, JSON output root, and wiki output root for local runs |
 | `frontend/app.js` + `frontend/README.md` | UI labels, type-to-tab mapping, external files, and catalog behavior | Rebrand the UI, adapt type tabs, and expose richer metadata in the browser |
 
@@ -463,9 +489,23 @@ This keeps graph expansion auditable and helps reviewers understand why a node o
 ## Minimal Template to Include in `metadata_overrides.json`
 Use this shape per document when you want concept/metadata support with optional HITL curation:
 ```json
-
-
-
+{
+  "documents": {
+    "doc_id_or_title": {
+      "summary": "Human-written summary of this document's purpose and scope.",
+      "human_reviewed": false,
+      "key_points": [
+        "Point 1: What users must understand.",
+        "Point 2: Critical rule or constraint."
+      ],
+      "relationships": {
+        "requires": [],
+        "depends_on": [],
+        "related_to": []
+      }
+    }
+  }
+}
 ```
 
 
@@ -554,7 +594,7 @@ Use this sequence when onboarding RASCAL for a new corpus or internal product su
 **1. Define the Operating Model**
 Decide up front:
 - Which document set is in scope for the first rollout
-- whether the first deployment is local-only, Azure-backed, or both
+- whether the first deployment is local-only, open-tool backed, enterprise-backed, or some deliberate combination
 - which teams will own metadata creation, source-link mapping, and frontend branding
 This prevents RASCAL from being treated as a generic chatbot shell before the knowledge and ownership model are clear.
 
@@ -574,9 +614,9 @@ These are the core human-controlled inputs that make the framework reusable and 
 
 **4. Choose the Runtime Path**
 Pick one of these paths deliberately:
-- local scaffold path: fastest for pipeline and UX validation
-- LLM path: use when you need richer compilation or live synthesis
-- Cloud ingestion path: use when you need graph-backed retrieval and cloud-mode behavior
+- local-first path: fastest for pipeline and UX validation; uses files, Markdown, local API, and deterministic retrieval
+- open-tool path: use local or open services such as Ollama/LM Studio, SQLite/DuckDB, Chroma/Qdrant/LanceDB, or file/Git-based workflows when they fit your environment
+- enterprise adapter path: use Azure, SharePoint, Entra ID, Cosmos DB, or other governed services only when those controls are needed
 Do not casually mix these paths in documentation or handoffs. Different teams will care about different prerequisites.
 
 **5. Align the Frontend to the Corpus**
@@ -644,14 +684,14 @@ If you have legacy payloads that expose `page_type`, treat them as compatibility
 The core idea is the same: build a wiki-shaped, grounded knowledge layer first, then answer questions from that curated representation instead of trating the model as the source of truth.
 
 This repo differs in a few important ways:
-- It is Azure Stack-oriented. The runtime, optional synthesis path, and deployment assumptions are built around Azure OpenAI and related Azure hosting patterns.
-- It does not use Claude models or autonomous multi-agent orchestration. The runtime is a single-assistant, pipeline-driven retrieval-and-answer flow.
+- It is local-first and provider-open. The default runtime uses local files, Markdown, JSON artifacts, and deterministic retrieval; Azure and other cloud services are optional adapters.
+- It is not designed around any named model vendor or autonomous multi-agent orchestration. The runtime is a single-assistant, pipeline-driven retrieval-and-answer flow.
 - It uses an explicit extraction pipeline. Raw source documents are converted into structured JSON artifacts before wiki compilation, rather than assuming a single monolithic wiki-generation step.
 - It keeps a human curation layer in the loop; `metadata_overrides.json` and `config/source_url_map.json` are first-class parts of the workflow, not incidental extras.
 - It separates deterministic and LLM-assisted compilation. Scaffold mode gives a reproducible baseline; LLM mode is an optional enhancement, not the only path.
 - It is designed for a variety of corpora in a variety of settings (academic or enterprise). The document model, relationships, traceability, and citation handking are optimized for a variety of document formats (policy, procedure, forms, analysis, primary sources)
 - It exposes an application surface, not just a content artifact. The wiki is compiled into assets that are then served through API and frontend layers with retrieval trace and citations.
-In short, this project is best understood as an Azure-centric, policy-assistant implementation of an LLM Wiki pattern rather than a direct clone of the original gist.
+In short, this project is best understood as a local-first, provider-open implementation of an LLM Wiki pattern rather than a direct clone of the original gist.
 
 
 ## Data Flow Transparency
@@ -715,7 +755,7 @@ This is the fastest way to understand how raw/source documents become answers us
 python -m venv .venv
 source .venv/bin/activate    # macOS/Linux
 
-#install parser, API, and Azure integration dependencies
+#install parser and local API dependencies
 pip install -r requirements.txt
 ```
 
@@ -778,9 +818,18 @@ When stakeholders clone this framework, the fastest path is:
 This sequence intentionally keeps onboarding lightweight for first-time adopters while preserving traceability and curation controls.
 
 
-## How to Get Started on the Cloud (Close Knowledge System)
+## Optional Provider Adapter Paths
 
-### This Section needs review to adapt to a non-Azure setup. The original documentation will exist elsewhere. (Pages 40-50)
+The local-first path above is the baseline. Provider adapters are optional extensions for teams that need additional runtime capabilities.
+
+Examples:
+- local/open model adapter: use Ollama, LM Studio, or another OpenAI-compatible local endpoint for optional synthesis
+- local persistence adapter: use SQLite, DuckDB, or file-backed JSONL for feedback, telemetry, and curator state
+- vector adapter: use Chroma, Qdrant, LanceDB, Azure AI Search, or another vector backend behind the retrieval boundary
+- graph adapter: use JSON graph files, NetworkX, Neo4j, Cosmos DB, or another graph-capable store behind the relationship boundary
+- source-system adapter: sync from GitHub, Obsidian exports, Google Drive, SharePoint, Teams, Confluence, or another controlled source system
+
+Adapter rule: the framework core must still run without the adapter. If an integration requires credentials, cloud resources, enterprise identity, or a managed service, it belongs behind a provider-specific boundary and should not be required for the quick start.
 
 
 ## Validation Checklist After a Build
@@ -809,8 +858,20 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 | `GET/wiki_index` | Wiki catalog for the documents sidebar |
 | `GET/wiki/{page_id}` | Single wiki page payload (dynamic route) |
 | `GET/feedback-review` | Curator space page |
-| `POST/feedback` | Record feedback event |
-| `POST/wiki` | Create a wiki draft response message |
+| `GET/feedback-data` | Read local feedback events with optional `status` and `rating` query filters |
+| `GET/triage_audit` | Read local triage actions derived from reviewed/proposed/resolved feedback events |
+| `GET/wiki_freshness` | Local wiki freshness summary based on page modification and review metadata |
+| `GET/lint/document` | Local wiki document lint summary for required structural fields |
+| `GET/cascade_status` | Local cascade status placeholder; reports unavailable with zero pending work |
+| `GET/query_telemetry_summary` | Local query/feedback term summary derived from feedback questions |
+| `GET/graph_analytics_summary` | Local graph node/edge summary derived from compiled wiki relationships |
+| `POST/feedback` | Record local feedback workflow event in `backend/feedback.jsonl` |
+| `POST/feedback-triage` | Update local feedback status, curator note, and optional linked wiki page |
+| `POST/feedback-propose-wiki` | Generate a Markdown wiki proposal draft from selected feedback events |
+| `POST/wiki_mark_reviewed` | Mark a local wiki page reviewed in `backend/wiki/review_metadata.json` |
+| `POST/wiki` | Create a Markdown wiki draft/analysis page and refresh the wiki index |
+
+Feedback status values currently supported by the local file-backed workflow are `new`, `reviewed`, `proposed_wiki`, and `resolved`. Feedback is operator workflow data, not canonical knowledge. Durable knowledge changes happen through explicit wiki write-back.
 
 
 ## Curator Health in Plain Language (Non-Developer Guide)
@@ -897,9 +958,16 @@ RASCAL is intentionally not a ChatGPT-style persistent chat product.
  *Mermaid Diagram?*
 
  Flow Highlights:
- - `POST /feedback` captures feedback events
+ - `POST /feedback` captures local feedback workflow events in `backend/feedback.jsonl`
+ - `GET /feedback-data` reads feedback events for review and supports `status`/`rating` filters
+ - `POST /feedback-triage` updates event status, curator note, and optional linked wiki page
+ - `POST /feedback-propose-wiki` generates a Markdown proposal from selected feedback events
+ - `GET /triage_audit` reports reviewed/proposed/resolved feedback actions
+ - `GET /wiki_freshness`, `GET /lint/document`, `GET /query_telemetry_summary`, and `GET /graph_analytics_summary` expose local curator health signals
+ - `POST /wiki_mark_reviewed` stores local review metadata in `backend/wiki/review_metadata.json`
  - Curator dashboard is served at `/feedback-review`
- - `POST /wiki` creates a wiki draft-style response payload
+ - `POST /wiki` creates a Markdown wiki draft/analysis page and refreshes `backend/wiki/index.md`
+ - Feedback logs are not canonical knowledge; explicit write-back is the boundary where reusable knowledge enters the wiki.
 To keep the root README focused on the pipeline and runtime setup, detailed frontend documentation is now maintained in:
 - `frontend/README.md`
 That guide covers UI architecture, customization points, type taxonomy mapping, feedback review, and endpoint expectations.
@@ -918,7 +986,12 @@ backend/wiki/    # Generated markdown wiki output
 
 ## Framework Docs
 
-*to be added*
+- `documentation/README.md` - documentation index
+- `documentation/STACK-OPEN-ARCHITECTURE.md` - local-first/provider-open architecture guidance and adapter boundaries
+- `documentation/FRONTEND-PRINCIPLES.md` - frontend transparency, customization, and route expectations
+- `documentation/SCORECARD.md` - domain fit and PoC readiness scorecard
+- `documentation/FUTURE-ENHANCEMENTS.md` - optional maturity roadmap
+- `documentation/WHITEPAPER.md` - conceptual framing and references
 
 
 ## Component Guides

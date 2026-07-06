@@ -228,7 +228,7 @@ function renderTrace() {
         <span>${escapeHtml(citation.type || 'source')}</span>
         <span>${escapeHtml(citation.confidence || 'medium')}</span>
       </div>
-      <p class="excerpt">${escapeHtml(citation.source_url || citation.source_file || 'Internal wiki citation')}</p>
+      <p class="excerpt">${renderCitationSource(citation)}</p>
     </article>
   `).join('');
 
@@ -350,6 +350,13 @@ function labelForCategory(category) {
     'primary-source': 'Primary Sources',
   };
   return labels[category] || category;
+}
+
+function renderCitationSource(citation) {
+  if (citation.source_url && /^https?:\/\//i.test(citation.source_url)) {
+    return `<a href="${escapeHtml(citation.source_url)}" target="_blank" rel="noreferrer">Source document</a>`;
+  }
+  return escapeHtml(citation.source_file || 'Internal wiki citation');
 }
 
 function renderMarkdown(text) {

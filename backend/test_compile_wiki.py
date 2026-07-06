@@ -15,10 +15,19 @@ class CompileWikiTests(unittest.TestCase):
             "documents": {
                 "sample": {
                     "summary": "A concise summary for the wiki page.",
+                    "human_reviewed": True,
                     "key_points": ["First point", "Second point"],
                     "relationships": {
-                        "requires": [],
-                        "depends_on": [],
+                        "requires": ["Procedure B"],
+                        "depends_on": [
+                            {
+                                "target": "Policy Parent",
+                                "weight": 0.9,
+                                "confidence": 0.97,
+                                "human_reviewed": True,
+                                "provenance": "curator",
+                            }
+                        ],
                         "related_to": [],
                     },
                 }
@@ -34,6 +43,10 @@ class CompileWikiTests(unittest.TestCase):
         self.assertIn("A concise summary for the wiki page.", page["markdown"])
         self.assertIn("- First point", page["markdown"])
         self.assertIn("- Second point", page["markdown"])
+        self.assertIn('"target": "Procedure B"', page["markdown"])
+        self.assertIn('"confidence": 0.95', page["markdown"])
+        self.assertIn('"target": "Policy Parent"', page["markdown"])
+        self.assertIn('"provenance": "curator"', page["markdown"])
 
 
 if __name__ == "__main__":

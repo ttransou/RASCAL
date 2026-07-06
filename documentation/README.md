@@ -8,6 +8,7 @@ Existing files:
 - `FRONTEND-PRINCIPLES.md` — frontend design principles for the static client.
 - `GRAPH-ARCHITECTURE.md` — architecture notes on graph/ontology choices.
 - `SCORECARD.md` — evaluation metrics and PoC success criteria.
+- `STACK-OPEN-ARCHITECTURE.md` — local-first/provider-open architecture guidance and adapter boundaries.
 - `WHITEPAPER.md` — high-level framing and references.
 
 Suggested additions (placeholders):

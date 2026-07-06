@@ -14,8 +14,10 @@ from typing import Any, Dict, Iterable, List
 
 try:
     from .ingest import ingest as run_ingest
+    from .relationships import normalize_relationships
 except ImportError:  # pragma: no cover - direct script execution fallback
     from ingest import ingest as run_ingest
+    from relationships import normalize_relationships
 
 
 def _document_title(path: str) -> str:
@@ -60,11 +62,14 @@ def compile_wiki(
 
             relationships = override.get("relationships") or {}
             if relationships:
+                normalized_relationships = normalize_relationships(
+                    relationships,
+                    document_human_reviewed=bool(override.get("human_reviewed", False)),
+                )
                 lines.append("## Relationships")
-                for relation_name, related_items in relationships.items():
-                    if related_items:
-                        joined = ", ".join(str(item) for item in related_items)
-                        lines.append(f"- **{relation_name}**: {joined}")
+                for relation_name, related_items in normalized_relationships.items():
+                    for item in related_items:
+                        lines.append(f"- **{relation_name}**: {json.dumps(item, sort_keys=True)}")
                 lines.append("")
 
         lines.append("## Source Extract")

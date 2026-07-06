@@ -6,9 +6,17 @@ retrievers to replace the same boundary later.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
+
+try:
+    from .relationships import normalize_relationships
+    from .source_map import SourceUrlMap
+except ImportError:  # pragma: no cover - direct script execution fallback
+    from relationships import normalize_relationships
+    from source_map import SourceUrlMap
 
 
 def slugify(value: str) -> str:
@@ -23,9 +31,16 @@ def tokenize(value: str) -> list[str]:
 class LocalWikiRetriever:
     """Loads compiled wiki Markdown and ranks pages by lexical overlap."""
 
-    def __init__(self, wiki_dir: Path, *, repo_root: Path | None = None) -> None:
+    def __init__(
+        self,
+        wiki_dir: Path,
+        *,
+        repo_root: Path | None = None,
+        source_url_map: SourceUrlMap | None = None,
+    ) -> None:
         self.wiki_dir = wiki_dir
         self.repo_root = repo_root
+        self.source_url_map = source_url_map or SourceUrlMap()
 
     def load_documents(self) -> list[dict[str, Any]]:
         if not self.wiki_dir.exists():
@@ -53,6 +68,8 @@ class LocalWikiRetriever:
             "content": content,
             "markdown": content,
             "source_file": document["source_file"],
+            "source_url": document["source_url"],
+            "relationships": document["relationships"],
         }
 
     def retrieve(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
@@ -83,22 +100,24 @@ class LocalWikiRetriever:
                     "excerpt": self.best_excerpt(doc.get("markdown", ""), query_terms),
                     "summary": doc["summary"],
                     "source_file": doc["source_file"],
+                    "source_url": doc["source_url"],
                 }
             )
 
         scored.sort(key=lambda item: (-item["combined_score"], item["title"].lower(), item["id"]))
         return scored[:top_k]
 
-    def graph_payload(self) -> dict[str, list[dict[str, str]]]:
+    def graph_payload(self) -> dict[str, list[dict[str, Any]]]:
         docs = self.load_documents()
         nodes_by_id = {
             doc["id"]: {"id": doc["id"], "label": doc["title"], "group": doc["category"]}
             for doc in docs
         }
-        edges: list[dict[str, str]] = []
+        edges: list[dict[str, Any]] = []
         for doc in docs:
-            for relation_type, targets in doc.get("relationships", {}).items():
-                for target in targets:
+            for relation_type, relationships in doc.get("relationships", {}).items():
+                for relationship in relationships:
+                    target = relationship["target"]
                     target_id = slugify(str(target))
                     nodes_by_id.setdefault(
                         target_id,
@@ -108,7 +127,19 @@ class LocalWikiRetriever:
                             "group": "concept",
                         },
                     )
-                    edges.append({"from": doc["id"], "to": target_id, "type": relation_type})
+                    edges.append(
+                        {
+                            "from": doc["id"],
+                            "to": target_id,
+                            "type": relation_type,
+                            "target": target,
+                            "weight": relationship["weight"],
+                            "confidence": relationship["confidence"],
+                            "human_reviewed": relationship["human_reviewed"],
+                            "provenance": relationship["provenance"],
+                            "review_state": relationship["review_state"],
+                        }
+                    )
 
         return {"nodes": list(nodes_by_id.values()), "edges": edges}
 
@@ -124,15 +155,18 @@ class LocalWikiRetriever:
         title = self.extract_title(path, content)
         summary = self.extract_summary(content)
         doc_type = self.infer_type(title, content)
+        source_file = self.source_file(path)
+        doc_id = path.stem
         return {
-            "id": path.stem,
+            "id": doc_id,
             "title": title,
             "type": doc_type,
             "category": self.category_for_type(doc_type),
             "summary": summary,
             "key_points": self.extract_list_section(content, "Key Points"),
             "relationships": self.extract_relationships(content),
-            "source_file": self.source_file(path),
+            "source_file": source_file,
+            "source_url": self.source_url_map.resolve(doc_id=doc_id, source_file=source_file, title=title),
             "markdown": content,
         }
 
@@ -166,17 +200,24 @@ class LocalWikiRetriever:
         plain = [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]
         return plain[0] if plain else ""
 
-    def extract_relationships(self, content: str) -> dict[str, list[str]]:
-        relationships: dict[str, list[str]] = {}
+    def extract_relationships(self, content: str) -> dict[str, list[dict[str, Any]]]:
+        relationships: dict[str, list[Any]] = {}
         for item in self.extract_list_section(content, "Relationships"):
             match = re.match(r"\*\*(?P<name>[^*]+)\*\*:\s*(?P<targets>.+)", item)
             if not match:
                 continue
             relation_name = match.group("name").strip()
-            targets = [target.strip() for target in match.group("targets").split(",") if target.strip()]
+            target_text = match.group("targets").strip()
+            if target_text.startswith("{"):
+                try:
+                    targets = [json.loads(target_text)]
+                except json.JSONDecodeError:
+                    targets = [target_text]
+            else:
+                targets = [target.strip() for target in target_text.split(",") if target.strip()]
             if targets:
-                relationships[relation_name] = targets
-        return relationships
+                relationships.setdefault(relation_name, []).extend(targets)
+        return normalize_relationships(relationships, default_provenance="wiki_markdown")
 
     def extract_list_section(self, content: str, heading: str) -> list[str]:
         in_section = False

@@ -1,11 +1,11 @@
 {
-  "by_doc_id":{
-    "doc_id", "http://wwww.whatever.com/../document.docx"
+  "by_doc_id": {
+    "doc_id_or_wiki_page_id": "https://example.org/source-system/document"
   },
-    "by_source_file":{
-      "filename.docx":"http://www.whatever.com/../filename.docx"
+  "by_source_file": {
+    "filename-or-relative-path.ext": "https://example.org/source-system/document"
   },
-    "by_title":{
-      "Document Title":"http://www.whatever.com/../document.docx"
+  "by_title": {
+    "Document Title": "https://example.org/source-system/document"
   }
 }

@@ -29,7 +29,7 @@ RASCAL therefore proposes a different answer to the question of "enterprise" AI.
 
 Enterprise AI often fails in subtle ways before it fails in obvious ones. It can produce language that is fluent before it is dependable, plausible before it is accountable, and efficient before it is governable. In low-stakes settings, this may be tolerated. In domains shaped by policy, compliance, engineering standards, legal interpretation, operational procedure, or audit requirements, it is not enough.
 
-RASCAL addresses that problem by shifting the center of gravity away from transient query-time synthesis over raw files and toward a maintained knowledge substrate. In this framework, source documents are not treated as the final runtime interface. They are transformed into structured artifacts, compiled into a persistent wiki layer, enriched with metadata and semantic relationships, and optionally persisted in a graph-shaped Cosmos DB model for richer retrieval and traversal.
+RASCAL addresses that problem by shifting the center of gravity away from transient query-time synthesis over raw files and toward a maintained knowledge substrate. In this framework, source documents are not treated as the final runtime interface. They are transformed into structured artifacts, compiled into a persistent wiki layer, enriched with metadata and semantic relationships, and optionally projected into graph, vector, or cloud-backed stores for richer retrieval and traversal.
 
 This yields several advantages. First, it creates continuity. Knowledge need not be rediscovered from scratch with each user question. Second, it creates traceability. Answers can be tied back to curated documents, structured metadata, and explicit source links. Third, it creates governability. Human judgment enters the system through defined curation surfaces rather than as an informal afterthought. Finally, it allows knowledge to compound. Validated answers can be written back into the wiki so that value accumulates rather than dissipates.
 
@@ -88,7 +88,7 @@ The point is not that one pattern is universally better than the other. The poin
 
 RASCAL is intentionally modest in scope. That modesty is not a weakness. It is an architectural discipline.
 
-The framework was originally designed as a reusable Azure-oriented baseline for building grounded assistants over bounded, curated corpora. However, RASCAL is stack-agnostic in its current iteration. RASCAL provides the extraction pipeline, wiki compilation flow, retrieval surface, graph-shaped persistence model, and UI/API scaffolding necessary to turn a selected set of documents into an explainable assistant. It does not ship with bundled domain data, nor does it assume that every corpus is ready for meaningful AI retrieval. RASCAL expects the adopting team to provide a bounded corpus, a domain-appropriate metadata model, and the human ownership necessary to govern the resulting knowledge layer.
+The framework was originally designed as a reusable Azure-oriented baseline for building grounded assistants over bounded, curated corpora. However, RASCAL is local-first and provider-open in its current iteration. RASCAL provides the extraction pipeline, wiki compilation flow, retrieval surface, graph-shaped relationship model, and UI/API scaffolding necessary to turn a selected set of documents into an explainable assistant. It does not ship with bundled domain data, nor does it assume that every corpus is ready for meaningful AI retrieval. RASCAL expects the adopting team to provide a bounded corpus, a domain-appropriate metadata model, and the human ownership necessary to govern the resulting knowledge layer.
 
 The boundedness matters for another reason as well: it prevents expectation drift. RASCAL is not a general-purpose autonomous agent stack. It is not a multi-agent orchestration platform. It is not an open-domain assistant. It is not a chat-over-everything ingestion posture. It is not designed around named models in the current implementation. Each of these non-goals is an intentional clarification of identity.
 
@@ -116,9 +116,9 @@ RASCAL adapts to the corpus's ontology. The corpus does not need to adapt to a f
 
 ## 6. The Knowledge Lifecycle
 
-The easiest way to understand RASCAL operationally is to see it as a lifecycle rather than as a chat interface. The system begins with a bounded set of source documents in `raw/`. Those documents are processed into JSON artifacts that capture content structure, identifiers, inferred document type, and source metadata. Human curation then refines the machine-produced layer through `metadata_overrides.json` and `config/source_url_map.json` (specifically important for objects in places like SharePoint or similar cloud-based formats), enriching summaries, key points, relationships, and authoritative source links.
+The easiest way to understand RASCAL operationally is to see it as a lifecycle rather than as a chat interface. The system begins with a bounded set of source documents in `raw/`. Those documents are processed into JSON artifacts that capture content structure, identifiers, inferred document type, and source metadata. Human curation then refines the machine-produced layer through `metadata_overrides.json` and `config/source_url_map.json`, enriching summaries, key points, relationships, and authoritative source links. Those source links may point to local files, Git repositories, exported document folders, SharePoint, Google Drive, or another system of record.
 
-From there, RASCAL compiles a persistent wiki layer. Markdown pages are generated and indexed, forming a maintained representation of the corpus that is readable both by users and the retrieval system. If graph ingestion is enabled, documents, chunks, and relationships are persisted into Cosmos DB using a graph-shaped data model. At runtime, the system can retrieve relevant wiki pages and chunks, optionally follow graph neighbors, and return answers with traceability and citations. Finally, user feedback can be captured and, when valuable, written back into the wiki so that the corpus improves through use.
+From there, RASCAL compiles a persistent wiki layer. Markdown pages are generated and indexed, forming a maintained representation of the corpus that is readable both by users and the retrieval system. The default runtime retrieves from this local wiki layer. If graph, vector, model, or cloud adapters are enabled, they extend the same lifecycle without becoming prerequisites. At runtime, the system can retrieve relevant wiki pages and chunks, optionally follow relationship neighbors, and return answers with traceability and citations. Finally, user feedback can be captured and, when valuable, written back into the wiki so that the corpus improves through use.
 
 This sequence is best understood not as a one-way pipeline but as a loop. Answers can become future knowledge artifacts. Negative feedback can become curation work. Retrieval can inform refinement. The wiki is therefore not just a product of ingestion; it is a living layer in the operating model.
 
@@ -164,7 +164,7 @@ The wiki layer therefore serves as both interface and memory. It mediates betwee
 
 If the wiki layer provides persistence and readability, the graph layer provides topology. It enables the system to represent and traverse relationships that would otherwise be flattened into proximity or inferred only weakly through similarity.
 
-The graph model described in ARCHITECTURE.md uses Azure Cosmos DB NoSQL to implement a graph-shaped data architecture across documents, chunks, concepts, metadata, and edges. This is not a native graph database dependency in the current tier; it is a practical graph-like model expressed in terms of items and relationships. That choice matters because it balances semantic richness against implementation cost and operational simplicity.
+The graph model uses a graph-shaped data architecture across documents, chunks, concepts, metadata, and edges. In the local-first tier, that can begin as explicit relationship metadata in Markdown/JSON artifacts. In larger deployments, the same model can be projected into a graph-capable store such as JSON graph files, NetworkX, Neo4j, Cosmos DB, or another managed database. That choice matters because it balances semantic richness against implementation cost and operational simplicity.
 
 At the base of the graph are document nodes and chunk nodes. Document nodes carry identity, type, summary, key points, source lineage, embeddings, and update timestamps. Chunk nodes represent semantically coherent segments used for retrieval and sequential traversal. In a later development phase, concept nodes and metadata nodes further extend the model, enabling the persistent representation of cross-document entities, policy terms, taxonomy elements, authorship, version labels, approval records, and other contextual attributes.
 
@@ -177,7 +177,7 @@ In this sense, the graph layer is not an optional flourish. It is the mechanism 
 
 A particularly important design choice in the graph model is the explicit bidirectional storage of edges. Every relationship is written in both directions. If one document requires another, the reverse relation is stored as `required_by`. If one document supersedes another, the reverse is stored as `superseded_by`. Self-inverse relationships such as `related_to` remain symmetrical.
 
-This is a practical choice rather than a theoretical one. In a Cosmos DB SQL API setting, explicit reverse edges allow efficient reverse lookups without relying on expensive traversal primitives or a separate graph engine. The implementation guide emphasizes that this makes direct neighbor look up, reverse dependency quieries, and 2 to 3 hop traversal significanyly more workable in the current architecture.
+This is a practical choice rather than a theoretical one. Explicit reverse edges allow efficient reverse lookups without relying on expensive traversal primitives or a specific graph engine. This makes direct neighbor lookup, reverse dependency queries, and 2 to 3 hop traversal more workable whether the deployment uses local files, a lightweight graph library, or a managed database.
 
 graph TD
     subgraph RT [Reverse Types]
@@ -251,20 +251,20 @@ As described in GRAPH_UPDATES.md, edge types are now loaded from `metadata_defin
 
 ## 14. Runtime Behavior and Retrieval Posture
 
-At runtime, RASCAL remains faithful to its bounded knowledge posture. The system loads the compiled wiki representation, retrieves relevant documents and chunks, optionally expands context through graph neighbors, and returns an answer with citations and traceability. In local and cloud variants, different runtime paths are supported, including local wiki mode, retrieval-only mode, Azure-backed synthesis, Cosmos-backed graph retrieval, and optional Blob-backed persistence.
+At runtime, RASCAL remains faithful to its bounded knowledge posture. The system loads the compiled wiki representation, retrieves relevant documents and chunks, optionally expands context through relationship or graph neighbors, and returns an answer with citations and traceability. Different runtime paths can be supported through adapters: local wiki mode, retrieval-only mode, optional local model synthesis, optional vector search, optional graph persistence, and optional cloud-backed artifact storage.
 
 What matters most, however, is the closed-system orientation described in the README. Knowledge comes from the curated corpus and compiled wiki pages. Retrieval happens over the maintained internal knowledge layer. There is no dependency on open web search. This is a deliberate trust boundary. It limits coverage, but it improves auditibility, explainabilitt, and governanc.e
 
 In practice, this means the answering system is not pretending to know the world. It is exposing a bounded knowledge system and its internal structure through a natural-language interface. That difference is essential. It transforms the assistant from an improvisational responder into a mediator of institutional memory.
 
 
-## 15. Blob Persistence, Portability, and Operational Continuity
+## 15. Provider Adapters, Portability, and Operational Continuity
 
-Although RASCAL is local-first by default, the architecture also supports an optional Blob persistence bridge for artifact mirroring and cold-start hydration in cloud-hosted environments. This is not central to the framework's philosophical identity, but it is important to its operational maturity.
+Although RASCAL is local-first by default, the architecture can support optional provider adapters for artifact mirroring, model synthesis, vector retrieval, graph persistence, source synchronization, and cold-start hydration in hosted environments. These are not central to the framework's philosophical identity, but they are important to operational maturity when a deployment needs them.
 
-When enabled, Blob persistence can mirror query logs, feedback logs, generated wiki artifacts, JSON outputs, and optionally raw source files. It can also hydrate empty local runtime folders at startup in ephemeral environments, allowing new instances to populate themselves from persisted artifacts rather than starting from scratch.
+When enabled, persistence adapters can mirror query logs, feedback logs, generated wiki artifacts, JSON outputs, and optionally raw source files. They can also hydrate empty local runtime folders at startup in ephemeral environments, allowing new instances to populate themselves from persisted artifacts rather than starting from scratch.
 
-The bridge extends the framework into more cloud-native deployment patterns without altering the default local behavior when disabled. Its presence is a reminder that RASCAL is not merely a conceptual architecture; it is intended to function as a practical infrastructure under realistic hosting conditions.
+The adapter model extends the framework into open-tool or cloud-native deployment patterns without altering the default local behavior when disabled. Its presence is a reminder that RASCAL is not merely a conceptual architecture; it is intended to function as a practical infrastructure under varied hosting conditions.
 
 
 ## 16. Feedback, Write-Back, and the Compounding Knowledge Loop
@@ -313,9 +313,9 @@ This honesty about hfit is part of the framework's maturity. A system designed f
 
 ## 20. Operational Realism and Cost-Conscious Design
 
-A white paper on a framework such as RASCAL would be incomplete without acknowledging its operational posture. The graph layer is designed for Cosmos DB SQL API rather than requiring a dedicated native graph engine. Edge writes are explicit and bidirectional. Multi-hop traversal is handled through client-side or batch strategies in the current architecture. Indexing is treated as an infrastructure concern to be implemented via IaC, with Bicep recommended as the Azure-native default. RU costs are explicitly considered, with single-hop lookups relatively cheap and deeper traversals motivating caching, frontier control, or eventual path materialization.
+A white paper on a framework such as RASCAL would be incomplete without acknowledging its operational posture. The default graph and relationship posture should remain portable: edge writes are explicit, relationship semantics are inspectable, and multi-hop traversal can begin locally before a deployment chooses a specialized store. A small deployment may use Markdown, JSON, SQLite, NetworkX, or a local graph file. A larger deployment may choose Neo4j, Cosmos DB, Azure AI Search, or another managed backend. The framework should preserve the relationship contract while letting the operator choose the storage/runtime economics.
 
-This cost-consciousness is important because it reveals the framework's character. RASCAL is not a speculative architecture built without regard for implementation economics. It is deliberately shaped to remain useful under realistic cloud constraints. Even future features such as materialized paths, concept expansion, and possible Gremlin migration are framed as staged enhancements rather than assumptions required from the outset.
+This cost-consciousness is important because it reveals the framework's character. RASCAL is not a speculative architecture built without regard for implementation economics. It is deliberately shaped to remain useful under realistic local, open-tool, and cloud constraints. Future features such as materialized paths, concept expansion, and specialized graph engines should be framed as staged enhancements rather than assumptions required from the outset.
 
 That practicality strengthens the larger philosophical claim. A knowledge system meant for institutional use must not only be principled but also operable.
 

@@ -134,7 +134,7 @@ Planned: optional visual differentiation by action intent (for example, neutral 
 
 🛠 **Local-mode answer fallback hardening (originally implemented June 2026, v.1):**
    
-Local retrieval mode should no longer return excerpt-only output as the primary response in normal question flows. The fallback should always return a direct answer structure (Summary, Key Rules or Thresholds, Supporting Evidence) so framework behavior stays answer-first even when Azure LLM calls are disable/unavailable.
+Local retrieval mode should no longer return excerpt-only output as the primary response in normal question flows. The fallback should always return a direct answer structure (Summary, Key Rules or Thresholds, Supporting Evidence) so framework behavior stays answer-first even when optional model-backed synthesis is disabled or unavailable.
    
 Planned: add regression coverage to lock this behavior for framework starter projects and prevent reintroduction of excerpt-only answer templates.
 

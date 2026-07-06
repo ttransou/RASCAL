@@ -56,6 +56,7 @@ The trace panel shows retrieval evidence used for each answer:
 - excerpt preview and page metadata
 - citation cards with `doc_id`, `type`, `confidence`, `source_file`, and source URL
 It also shows run metadata badges such as mode, grounding status, and table-related signals.
+When `config/source_url_map.json` resolves a canonical URL, citation cards render it as an outbound Source document link. Without a mapped URL, the card falls back to the internal wiki/source file reference.
 
 ### 2) Wiki Documents Catalog
 The catalog lets users browse what knowledge exists before they ask:
@@ -111,15 +112,14 @@ Answering rendering supports:
 This reduces context switching and keeps answer exploration interactive.
 
 ### 4) Relationship Map Transparency
-The relationship map provides users with a graph-style view of how the knowledge layer can be navigated.
-This implemented map UI also supports:
-- document-only vs full-structure presets
-- node-group filters and edge-type filters
-- focused subgraphs at 1-3 hops from a selected node
-- persisted layout and filter state between reloads
-Right now, that view is intentionally templated. Until a real corpus is ingested, the graph uses scaffolded example nodes and edges so the interaction model can be demonstrated without implying that the current graph reflects live source-document relationships.
+The relationship map provides users with a graph-style view of how the compiled wiki layer can be navigated. The local API now serves relationship data from the wiki rather than a hardcoded demo graph.
+This implemented map UI supports:
+- node-group filters
+- live document and concept nodes from `/graph_map_data`
+- edge metadata for `type`, `weight`, `confidence`, `human_reviewed`, `provenance`, and `review_state`
+- visual distinction between reviewed edges and provisional edges
 
-🧠 Customization point: replace template node/edge assumptions with your curated relationship semantics before production release.
+🧠 Customization point: define domain-specific relationship semantics and review criteria before promoting graph traversal to production use.
 
 ### 5) Feedback and Write-Back Loop (Core Capability)
 This is not a nice-to-have feature. It is the primary mechanism that turns the assistant from a static Q&A interface into a compounding knowledge system.
@@ -249,8 +249,8 @@ Use this as a short rollout checklist when reusing the frontend for a new corpus
 ### Route Integration
 1) Confirm the backend serves the required chat routes: /, /health, /ask, /wiki_index. and /wiki/{page_id}
 2) If you are enabling the relationship map, verify /graph-map and /graph_map_data
-3) If you are enabling operator review workflows, verify /feedback, /feedback-data, /feedback-reivew, /feedbac-triage, /feedback-propose-wiki, and /triage_audit
-4) If you are enabling Curator Space health cards, verify /wiki_freshness, /lint/document, /cascade_status, /query_telemetry_summary, /graph_analytics_summary, and /wiki_marked_reviewed
+3) If you are enabling operator review workflows, verify /feedback, /feedback-data, /feedback-review, /feedback-triage, /feedback-propose-wiki, and /triage_audit
+4) If you are enabling Curator Space health cards, verify /wiki_freshness, /lint/document, /cascade_status, /query_telemetry_summary, /graph_analytics_summary, and /wiki_mark_reviewed
 5) Decide whether the left-nav document action should continue to open the in-app wiki catalog or be replaced with a specific destination.
 
 
@@ -273,10 +273,10 @@ Current Curator Space UX notes:
 Operational route details:
 - GET/feedback-review serves the review page
 - GET/feedback-data supplies the negative feedback entries shown on that page
-- POST/feedbac-triage updates triage status and curator note
+- POST/feedback-triage updates triage status, curator note, and optional linked wiki page
 - POST/feedback-propose-wiki generates markdown draft proposals from selected feedback entries
 - GET/triage_audit returns recent curator actions for audit visibility
-- GET/wiki_freshness, GET/link/document, GET/cascade_status, GET/query_telemetry_summary, and GET/graph_analytics_summary power the health/analytics cards.
+- GET/wiki_freshness, GET/lint/document, GET/cascade_status, GET/query_telemetry_summary, and GET/graph_analytics_summary power the health/analytics cards.
 - POST/wiki_mark_reviewed supports stale-page review recertification directly from the panel.
 
 
@@ -292,8 +292,8 @@ The frontend expects these endpoints:
 - GET/wiki_freshness	
 - GET/cascade_status	
 - GET/query_telemetry_summary	
-- GET/graph_analysis_summary	
-- GET/wiki_/{page_id}	
+- GET/graph_analytics_summary	
+- GET/wiki/{page_id}	
 - POST/wiki_mark_reviewed	
 - GET/raw/{file_name}	
 - GET/schema/document	
@@ -310,6 +310,21 @@ The frontend expects these endpoints:
 ```
 
 For detailed response shapes and full pipeline context, see README.md
+
+Current local-first feedback behavior:
+- POST/feedback writes workflow events to `backend/feedback.jsonl`
+- GET/feedback-data returns those events and supports `status` and `rating` filters
+- POST/feedback-triage updates event status, curator note, and optional linked wiki page
+- POST/feedback-propose-wiki returns a Markdown proposal draft from selected feedback events
+- GET/triage_audit returns reviewed/proposed/resolved feedback actions
+- GET/wiki_freshness reports local page age/review metadata
+- GET/lint/document reports local wiki structural lint warnings/errors
+- GET/cascade_status reports local cascade cleanup as unavailable with zero pending work
+- GET/query_telemetry_summary summarizes feedback question terms
+- GET/graph_analytics_summary summarizes local relationship graph nodes/edges
+- POST/wiki_mark_reviewed records local page review metadata
+- POST/wiki is the canonical write-back boundary that creates Markdown wiki content
+- feedback logs are operator workflow data, not canonical knowledge
 
 
 ## Boundaries and Scope

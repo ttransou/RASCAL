@@ -4,8 +4,9 @@ This file tracks implementation work and documentation updates so the repo stays
 
 ## Current Focus
 - [ ] Keep documentation aligned with implemented code paths and runtime behavior
-- [ ] Continue simplifying the stack toward a stack-agnostic baseline
-- [ ] Review and remove residual Azure-specific assumptions where not required
+- [ ] Update relevant README/documentation/TODO entries in the same change as implementation work
+- [ ] Continue simplifying the stack toward a local-first, provider-open baseline
+- [ ] Review and reframe residual Azure-specific assumptions as optional enterprise adapters where not required
 
 ## In Progress
 - [ ] README consistency pass against implemented backend and frontend routes/scripts
@@ -15,10 +16,10 @@ These items are documented as core RASCAL behavior in `README.md` and `documenta
 
 - [x] Reimplement real wiki-backed API behavior: make `/wiki_index`, `/wiki/{page_id}`, `/ask`, `/graph_map_data`, `/feedback`, and `/wiki` read from and write to actual local artifacts instead of hardcoded demo payloads.
 - [x] Reimplement the retrieval layer: replace `backend/retrieval.py` placeholder behavior with local wiki/document retrieval, ranking, trace generation, and citation payload assembly.
-- [ ] Reimplement feedback and write-back persistence: store feedback events, persist saved analysis/wiki draft pages, refresh the wiki catalog after write-back, and ensure written pages can re-enter retrieval.
-- [ ] Reimplement Curator Space backend routes: add `/feedback-data`, `/feedback-triage`, `/feedback-propose-wiki`, `/triage_audit`, `/wiki_freshness`, `/lint/document`, `/cascade_status`, `/query_telemetry_summary`, `/graph_analytics_summary`, and `/wiki_mark_reviewed` or downgrade docs until those routes exist.
-- [ ] Fix and wire source traceability: make `config/source_url_map.json` valid JSON, load it in backend responses, and surface canonical source URLs in citations/UI.
-- [ ] Reimplement relationship metadata and HITL edge semantics: support rich relationship objects with `target`, `weight`, `confidence`, `human_reviewed`, and `provenance`, including default strength rules and reviewed-vs-provisional behavior.
+- [x] Reimplement feedback and write-back persistence: store feedback events, persist saved analysis/wiki draft pages, refresh the wiki catalog after write-back, and ensure written pages can re-enter retrieval.
+- [x] Reimplement remaining Curator Space backend routes: add `/feedback-propose-wiki`, `/triage_audit`, `/wiki_freshness`, `/lint/document`, `/cascade_status`, `/query_telemetry_summary`, `/graph_analytics_summary`, and `/wiki_mark_reviewed` or downgrade docs until those routes exist.
+- [x] Fix and wire source traceability: make `config/source_url_map.json` valid JSON, load it in backend responses, and surface canonical source URLs in citations/UI.
+- [x] Reimplement relationship metadata and HITL edge semantics: support rich relationship objects with `target`, `weight`, `confidence`, `human_reviewed`, and `provenance`, including default strength rules and reviewed-vs-provisional behavior.
 
 ## Environment Reliability
 - [x] Install and verify ingestion dependencies in project `.venv`
@@ -46,17 +47,20 @@ These items are marked "originally implemented" in `documentation/FUTURE-ENHANCE
 - [ ] Deterministic tie-break retrieval ranking: restore stable tie-break ordering across local/cloud retrieval paths and verify provenance/review priority.
 - [ ] Robust no-result fallback hierarchy: restore clarify/re-query/insufficient-evidence fallback stages and add metrics for fallback-stage hit rates.
 
-## Stack-Agnostic Investigation
-- [ ] Inventory Azure-specific references in code and docs
-- [ ] Classify each reference as one of:
-  - required now
-  - optional integration
+## Stack-Open Adaptation
+- [x] Inventory Azure-specific references in code and docs
+- [x] Define minimal local-first baseline with zero cloud-provider lock-in
+- [x] Document provider-open architecture tiers and adapter boundaries
+- [ ] Classify remaining provider references as one of:
+  - core baseline
+  - open-tool adapter
+  - enterprise adapter
   - legacy/stale
-- [ ] Propose abstraction points for provider-specific services
-- [ ] Define minimal local-first baseline with zero cloud-provider lock-in
+- [ ] Propose code abstraction points for provider-specific services
 - [ ] Document migration notes for optional provider integrations
 
 ## Documentation Reality Checklist
+- [ ] Every implementation change updates the relevant docs in the same pass
 - [ ] Every command in docs points to an existing script
 - [ ] Every referenced file path exists in this branch
 - [ ] Endpoint tables match implemented routes

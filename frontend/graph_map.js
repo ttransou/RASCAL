@@ -76,7 +76,13 @@ function renderGraph() {
       ${visibleEdges.map((edge) => {
         const from = nodePositions[edge.from] || { x: 120, y: 120 };
         const to = nodePositions[edge.to] || { x: 300, y: 220 };
-        return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4"></line>`;
+        const reviewed = edge.human_reviewed === true;
+        const confidence = Number(edge.confidence || 0.5);
+        const weight = Math.max(1.5, Number(edge.weight || 0.5) * 4);
+        const stroke = reviewed ? '#14b8a6' : '#f59e0b';
+        const dash = reviewed ? '' : ' stroke-dasharray="6 4"';
+        const label = `${edge.type || 'related'} - ${reviewed ? 'reviewed' : 'provisional'} - confidence ${confidence.toFixed(2)} - ${edge.provenance || 'unknown provenance'}`;
+        return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${stroke}" stroke-width="${weight.toFixed(1)}"${dash}><title>${escapeHtml(label)}</title></line>`;
       }).join('')}
       ${visibleNodes.map((node) => {
         const position = nodePositions[node.id] || { x: 140, y: 140 };
@@ -84,7 +90,7 @@ function renderGraph() {
         return `
           <g>
             <circle cx="${position.x}" cy="${position.y}" r="38" fill="${fill}" opacity="0.9"></circle>
-            <text x="${position.x}" y="${position.y + 6}" text-anchor="middle" fill="#07111f" font-size="13" font-weight="600">${node.label}</text>
+            <text x="${position.x}" y="${position.y + 6}" text-anchor="middle" fill="#07111f" font-size="13" font-weight="600">${escapeHtml(node.label || node.id)}</text>
           </g>
         `;
       }).join('')}
@@ -96,3 +102,12 @@ function renderGraph() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
