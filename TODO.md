@@ -30,6 +30,18 @@ These items are documented as core RASCAL behavior in `README.md` and `documenta
 - [ ] Create a single "source of truth" run path in docs (ingest -> compile -> serve)
 - [ ] Add a lightweight changelog section in README for major behavior changes
 
+## Metadata Suggestion Spike
+- [x] Add optional spaCy-based metadata suggestion script (`backend/suggest_metadata.py`)
+- [x] Ensure suggestions are written to a separate file and never auto-overwrite curated metadata
+- [x] Add model-profile selection flag (`framework-default`, `lightweight`, `balanced`, `high-accuracy`) for implementor context tuning
+- [x] Add model availability check mode (`--check-models`) for environment validation before suggestion runs
+- [x] Verify spaCy library licensing metadata and usage assumptions for framework distribution
+- [x] Verify spaCy model-package licensing metadata and confirm local cost expectations (no per-call API billing)
+- [x] Capture licensing/cost guidance in README and docs for implementors
+- [ ] Complete organization-specific OSS/legal sign-off for spaCy + selected model packages before production
+- [ ] Evaluate quality using a real corpus sample and decide whether to keep/extend suggestion heuristics
+- [ ] Optionally validate profile outcomes with installed models in environments where model downloads are allowed
+
 ## Originally Implemented Enhancement Reconciliation
 These items are marked "originally implemented" in `documentation/FUTURE-ENHANCEMENTS.md`, but this branch needs verification or reimplementation before the docs can claim them as current behavior.
 

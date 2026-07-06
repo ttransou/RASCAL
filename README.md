@@ -807,6 +807,28 @@ After the framework is running, the most common customization steps are:
 3. Repoint extraction and wiki output directories with `backend/process_raw_sources.py --output-root ...` and `backend/wiki_compiler.py --output-root ... --wiki-root ...` if your corpus layout differs from the default.
 4. Rebrand the UI and adapt type tabs in `frontend/index.html` and `frontend/app.js` when reusing the framework for another team.
 
+Optional metadata suggestion spike (guardrailed):
+- Generate suggestion-only metadata from ingested JSON using:
+  - `python backend/suggest_metadata.py backend/json --output backend/json/metadata_suggestions.json`
+- Check local model/profile availability first:
+  - `python backend/suggest_metadata.py --check-models`
+  - `python backend/suggest_metadata.py --check-models --model en_core_web_md`
+- Keep framework defaults:
+  - `python backend/suggest_metadata.py backend/json --model-profile framework-default`
+- Choose by corpus/runtime context:
+  - `python backend/suggest_metadata.py backend/json --model-profile lightweight`
+  - `python backend/suggest_metadata.py backend/json --model-profile balanced`
+  - `python backend/suggest_metadata.py backend/json --model-profile high-accuracy`
+- Explicit model override (if your environment allows model installs):
+  - `python backend/suggest_metadata.py backend/json --model en_core_web_md`
+- Suggestions are written to a separate file and require manual review before copying any values into `metadata_overrides.json`.
+- If the requested model is unavailable, the script falls back to a lightweight sentencizer pipeline.
+
+Licensing and cost note (spaCy stack):
+- Local verification in this repo environment shows `spacy` and `en_core_web_sm` package metadata reporting `MIT` license.
+- The current RASCAL usage path is local package usage (library + optional local model package), with no per-call API billing required for this feature.
+- Implementors should still run internal OSS/legal review for their deployment context and any additional third-party models they install.
+
 
 ## Clone and Customize Handoff (No Bundled Data)
 When stakeholders clone this framework, the fastest path is:

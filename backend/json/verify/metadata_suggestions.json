@@ -1,0 +1,32 @@
+{
+  "note": "Suggestions only. Review manually before copying to metadata_overrides.json.",
+  "spacy_model": "blank-en-sentencizer",
+  "documents": {
+    "sample": {
+      "source_path": "backend/wiki/sample.md",
+      "suggested": {
+        "summary": "# sample ## Source Extract hello from rascal",
+        "key_points": [
+          "# sample ## Source Extract hello from rascal"
+        ],
+        "entities": [],
+        "terms": [
+          "sample",
+          "source",
+          "extract",
+          "hello",
+          "rascal"
+        ],
+        "relationships": {
+          "requires": [],
+          "depends_on": [],
+          "related_to": []
+        }
+      },
+      "guardrails": {
+        "human_review_required": true,
+        "do_not_auto_apply": true
+      }
+    }
+  }
+}

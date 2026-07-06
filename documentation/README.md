@@ -21,3 +21,4 @@ Suggested additions (placeholders):
 Notes:
 - Keep long-form design docs here; short HOWTOs can live in `backend/` or `frontend/` as README fragments.
 - When ready, add cross-links from `README.md` to key docs in this folder.
+- For optional spaCy metadata suggestion tooling, local verification in this repo found `spacy` and `en_core_web_sm` reporting `MIT` license metadata; treat this as implementation guidance and complete your organization's OSS/legal review before production rollout.

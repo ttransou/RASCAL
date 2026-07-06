@@ -107,7 +107,7 @@ The third is **calibrated trust**. RASCAL treats uncertainty honestly. Extracted
 
 The fourth is **human stewardship.** This framework automates mechanical, repeatable tasks while preserving human judgment where meaning and risk are genuinely domain-specific. Metadata overrides, source URL mappings, concept merges, relationship validation, and confidence elevation all belong within this governance space.
 
-The fifth is **domain adaptability **. RASCAL does not impose a single ontology across all corpora. Document taxonomies, relationship semantics, metadata structures, and fallback behaviors are defined in configuration rather than hardwired into the code. The framework provides machinery. The corpus proves meaning.
+The fifth is **domain adaptability**. RASCAL does not impose a single ontology across all corpora. Document taxonomies, relationship semantics, metadata structures, and fallback behaviors are defined in configuration rather than hardwired into the code. The framework provides machinery. The corpus proves meaning.
 
 ### Doctrine
 
