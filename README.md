@@ -240,6 +240,30 @@ Everything else is automated:
 - Retrieval, citation, tracing →  API Endpoints
 
 
+## Current Build Status and Workflow (V2-style)
+This repository is currently being rebuilt around a working ingestion-to-wiki pipeline that reflects the README’s architecture in a pragmatic, version-2 form.
+
+The current workflow is:
+1. Put source files into the raw/ folder.
+2. Run ingestion to extract text from supported document types into JSON artifacts.
+3. Use curated metadata from metadata_overrides.json to enrich the extracted content.
+4. Compile those artifacts into Markdown wiki pages under backend/wiki.
+
+The code now follows this shape:
+- backend/ingest.py — primary ingestion implementation
+- backend/process_raw_sources.py — thin compatibility wrapper for the README-style entry point
+- backend/compile_wiki.py — primary wiki compilation implementation
+- backend/wiki_compiler.py — thin compatibility wrapper for the README-style entry point
+
+Typical commands:
+```bash
+source .venv/bin/activate
+python backend/process_raw_sources.py raw --output-root backend/json
+python backend/wiki_compiler.py raw --output-root backend/json --wiki-root backend/wiki
+```
+
+This is intentionally a practical first-pass implementation of the README’s conceptual pipeline. As the project matures, the README and the code will be updated together to reflect the final architecture.
+
 ## Why Human Curation is Needed (Plain Language)
 Automation gets you speed; 🧠 human curation gives you trust.
 

@@ -4,12 +4,12 @@
       "summary":"Human-written summary of this document's purpose and scope.",
       "key_points":[
         "Point 1: What users must understand.",
-        "Point 2: Critical rule or constraint.",
+        "Point 2: Critical rule or constraint."
       ],
-      "relationships":[
-      "requires":["ref_to_prerequisite_doc"],
-      "depends_on":["ref_to_parent_policy"],
-      "related_to":["ref_to_sibling_concept"]
+      "relationships":{
+        "requires":["ref_to_prerequisite_doc"],
+        "depends_on":["ref_to_parent_policy"],
+        "related_to":["ref_to_sibling_concept"]
       }
     }
   }
