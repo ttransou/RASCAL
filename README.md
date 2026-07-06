@@ -162,10 +162,8 @@ Unlike rigid, top-down knowledge platforms, RASCAL is designed for corpus operat
 RASCAL ships with sensible defaults (e.g., `requires`, `depends_on`, `related_to` relationships; policy, procedure, standard, required document types), but these are **templates, not constraints.**
 
 When you bring a new corpus, you customize:
-- **Document type taxonomy** in `metadata_definitions.json` where you can rename or expand types to fit your domain
-- **Relationship/edge type registry** in `metadata_definitions.json` where you declare which relationship types exist in your domain and their semantics, weight defaults, and confidence thresholds.
 - **Metadata enrichment rules** in `metadata_overrides.json` where you curate document summaries, key points, and relationships specific to your context.
-- **Fallback answers and response templates** in `config/fallback_qa.json` and `config/fallback_templates.json` where you inject domain-specific knowledge and phrasing.
+- **Source traceability mapping** in `config/source_url_map.json` where you maintain canonical links back to upstream systems.
 
 This means:
 - A credit/risk corpus uses relationships like `delegates_to`, `exempts`, `scoped_to`, not generic `related_to`
@@ -192,7 +190,7 @@ Before bringing a dataset to RASCAL, use the AI KMS Domain Feasibility Scorecard
 - **Value:** How useful would AI-assisted retrieval be for this domain? (e.g., reuse frequency, retrieval pain, decision impact)
 - **Readiness**: How suitable is the current content for AI use without excessive curation/pre-processing? (e.g., structural coherence, semantic clarity, documentation currency)
 
-The SCORECARD.md includes:
+The `documentation/SCORECARD.md` includes:
 - Five value dimensions to evaluate
 - Five readiness dimensions to evaluate
 - Scoring guidance for each (1-5 scale)
@@ -218,12 +216,10 @@ What to bring when evaluating your domain:
 ## Framework Scope
 RASCAL as a framework intentionally contains:
 - Pipeline and API source code (`backend/`, `frontend/`)
-- Template config (`config/fallback_qa.json`, `config/fallback_templates.json`, `config/source_url_map.json`, the last may not be applicable to your corpus)
-- Metadata taxonomy seed file (`metadata_definitions.json`)
-- Schema placeholder docs (`config/schema/SCHEMA.md`)
+- Template config (`config/source_url_map.json`)
+- Documentation in `documentation/` including scorecard and architecture notes
 - Empty metadata stubs (`metadata_overrides.json` with "documents":{})
-- Environment template (`.env.example`)
-- Placeholder directories (`raw/.gitkeep`)
+- Placeholder directory (`raw/`)
 
 RASCAL does not contain source documents, compiled wiki output, or domain-specific fallback answers.
 
@@ -235,8 +231,8 @@ RASCAL is entirely automated EXCEPT for two JSON files that require human curati
 🧠 Required before production: complete both files with dataset-specific values and reviewer ownership.
 
 Everything else is automated:
-- Document extraction (`process_raw_sources.py`) → JSON
-- Wiki compilation (`wiki_compiler.py`) → Markddown + index
+- Document extraction (`backend/process_raw_sources.py`) → JSON
+- Wiki compilation (`backend/wiki_compiler.py`) → Markdown + index
 - Retrieval, citation, tracing →  API Endpoints
 
 
@@ -388,15 +384,9 @@ For enterprise reuse, it helps to separate what you must provide to get the fram
 | Source documents in `raw/`                  | Yes                                                        | Any real pipeline run                                                  | The framework need a corpus to extract and compile                                       |
 | `metadata_overrides.json`                   | Yes for a proper corpus run                                | Before treating the wiki as curated knowledge                          | Human summaries, key points, and relationships are part of the framework’s quality model |
 | `config/source_url_map.json`                | Yes for production-like traceability                       | Before expecting source links in citations/UI                          | Preserves traceability back to authoritative source systems                              |
-| `metadata_definitions.json`                 | Yes for metadata synthesis workflows                       | Before relying on normalized document types                            | Defines your taxonomy and must be curated for domain-fit                                 |
 | Python environment + requirements.txt     | Yes                                                        | Always                                                                 | Needed for the parser, API, and local runtime                                            |
-| Azure Open AI env vers                    | Only for `--wiki-mode llm` or non-simulated chat synthesis | When using Azure-backed LLM paths                                      | Enables LLM completion, embeddings, and chat synthesis                                   |
-| Cosmose env vers                          | Only for ingestion/cloud mode                              | When omitting `--skip-ingest` or running cloud-backed retrieval        | Enables graph ingestion and cloud-mode date access                                       |
-| metadata_definitions.json                 | No                                                         | Only when changing or extending the default type taxonomy              | Adjusts the document classification vocabulary                                           |
-| `config/fallback_qa.json`                   | No                                                         | When you want tailored low-evidence or pre-corpus answers              | Lets you inject domain-specific fallback behavior                                        |
-| `config/fallback_template.json`             | No                                                         | When you want to tune the assistant wording and clarification behavior | Lets you alter response template without code changes                                    |
 | `frontend/*` branding and tab mapping       | No                                                         | When white-labeling or adapting the UI to a new corpus                 | Supports reuse across teams and domains                                                  |
-| Pipeline flags in `backend/run_pipeline.py` | No                                                         | When changing flow, directories, or deployment mode                    | Makes the same framework reusable across local and cloud workflows                       |
+| CLI flags in `backend/process_raw_sources.py` and `backend/compile_wiki.py` | No                                                         | When changing extraction/compile directories for your local workflow   | Lets you reuse the same framework across different corpus layouts                        |
 
 
 ## Minimum Required to Run Locally
@@ -405,60 +395,44 @@ For the smallest credible local run, you need only:
 - a few source files in `raw/`
 - curated `metadata_overrides.json`
 - curated `config/source_url_map.json`
-- scaffold mode pipeline run with `--skip-ingest`
-- local API with `--local-mode`
+- extraction and compilation runs using `backend/process_raw_sources.py` and `backend/wiki_compiler.py`
+- local API using `python backend/api.py`
 Everything else in this section is about adaptation, enrichment, or alternate runtime paths.
 
 
 ## Optional Enterprise Customization
 These are the main reuse levers when adapting RASCAL for another business unit, area, corpus, or product surface:
-- taxonomy customization in `metadata_definitions.json`
-- fallback and clarification behavior in `config/fallback_qa.json` and `config/fallback_templates.json`
-- Azure development wiring in `.env`
-- pipeline pathing and mode selection in `backend/run_pipeline.py`
+- metadata curation in `metadata_overrides.json`
+- source traceability mapping in `config/source_url_map.json`
+- ingestion/compilation pathing with `backend/process_raw_sources.py` and `backend/wiki_compiler.py`
 - UI naming, category mapping, and external links in `frontend/app.js` and `frontend/index.html`
 
 
 | File/Surface | What it controls | Typical customization |
 | :---- | :---- | :---- |
-| `metadata_definition.json` | Domain-specific taxonomy (document types, relationship/edge-types, term definitions) used throughout the pipeline | This is where you define your domain’s ontology – document types, relationship semantics, edge type registries, weight/confidence defaults, and term definitions for your corpus. Required customization point. |
 | `metadata_overrides.json` | Per-document human curation and default metadata | Add summaries, key points, relationships, and final type overrides |
 | `config/source_url_map.json` | Source-document links used in citations and UI | Point citations to SharePoint, Drive, etc., file portals, or document systems |
-| `config/fallback_qa.json` | Domain-specific canned answers when no grounded wiki answer is available | Add starter FAQ behavior before you corpus is loaded |
-| `config/fallback_templates.json` | Working templates for capability, clarification, and insufficient-context responses | Tune assistant tone and follow-up prompts without editing code |
-| `.env/.env.example` | Azure OpenAI, Cosmos, and ingestion tuning knobs | Set deployments, endpoints, chunk sizing, and semantic break thresholds |
-| `backend/run_pipeline.py` | End-to-end pipeline orchestration | Switch between wiki-first vs. legacy, scaffold vs. LLM, local vs. ingest-enabled runs |
-| `frontend/app.js` \+ `frontend/FRONTEND-README.md` | UI labels, type-to-tab mapping, external files, and catalog behavior | Rebrand the UI, adapt type tabs, and expose richer metadata in the browser |
+| `backend/process_raw_sources.py` + `backend/wiki_compiler.py` | Ingestion and wiki compilation orchestration | Control source path, JSON output root, and wiki output root for local runs |
+| `frontend/app.js` + `frontend/README.md` | UI labels, type-to-tab mapping, external files, and catalog behavior | Rebrand the UI, adapt type tabs, and expose richer metadata in the browser |
 
 
 ## What Each Surface Actually Does
-**`metadata_definitions.json`**
-- supplies the term definitions consumed by `synth_metadata.py`
-- helps normalize extracted document types before wiki compilation
-- is the right place to adapt RASCAL from policy-style corpora to a different domain taxonomy
+**`metadata_overrides.json`**
+- stores curated summaries, key points, and relationship hints that are merged during wiki compilation
 
-**`config/fallback_qa.json` and `config/fallback_templates.json`**
-- `fallback_qa.json` stores explicit fallback answers and clarifying questions
-- `fallback_templates.json` stores reusable output phrasing for capability, clarification, and low-evidence responses
-- These files let you customize assistant behavior safely without editing prompt logic in `graph_api.py/graph_chat.py`
+**`config/source_url_map.json`**
+- stores mappings from internal IDs/source file names/titles to canonical source URLs
+- supports traceability when you surface source links in UI or downstream APIs
 
-**`.env` runtime controls**
-- Azure chat path: ETC ETC
-- Embedding path: ETC ETC
-- Cloud graph path: ETC ETC
-- Ingestion quality/cost tradeoffs: ETC ETC
-
-**`backend/run_pipeline.py` orchestration switches**
-- `--pipeline-mode wiki-first|legacy`: choose the newer integrated flow or the older multi-step flow
-- `--wiki-mode skip|scaffold|llm`: skip wiki compilation, compile deterministically, or compile with Azure OpenAI assistance
-- `--skip-ingest`: stay local and avoid Cosmos ingestion
-- `health-url`: verify API health after pipeline completion
-- Path flags such as `--raw-dir`, `--output-dir`, `--wiki-root`, and `wiki-dir` make it possible to re-point RASCAL at a different corpus layout with editing code
+**Current ingestion/compilation CLI switches**
+- `backend/process_raw_sources.py`: use the positional `source` argument and `--output-root` to control where extracted JSON is written
+- `backend/wiki_compiler.py`: use the positional `source` argument plus `--output-root`, `--wiki-root`, and `--metadata` to control compilation inputs/outputs
+- Use absolute or repo-relative paths to repoint RASCAL at a different corpus layout without editing code
 
 **Frontend customization**
 - `frontend/app.js` controls type normalization, wiki tab behavior, external links, and model/catalog rendering
 - `frontend/index.html` controls visible branding, labels, and the app shell layout
-- `frontend/FRONTEND-README.md` already documents the UI-specific customization points in more detail
+- `frontend/README.md` documents frontend-specific setup and behavior
 
 
 ## Concept and Metadata Node Framework
@@ -516,16 +490,11 @@ The framework itself needs **zero human intervention** to operate. All of the fo
 
 | Process | Automate By | Human Input? | Why |
 | :---- | :---- | :---- | :---- |
-| Document extraction (DOCX/XLSX/PDF, et al →JSON) | `process_raw_sources.py` | NO | Framework handles any well-formed supported source file |
-| Paragraph extraction & chunking | `wiki_compiler.py` | NO | Deterministic semantic chunking (configurable but automatic) |
-| Bidirectional edge creation | `graph_ingest.py` | NO | Relationships extracted from JSON; reversed \+ stored automatically |
-| Edge metadata (weight, confidence, provenance) | `graph_ingest.py` | No | Defaults are sensible; all edges created with full metadata schema |
-| Multi-hop graph traversal | `graph_chat.py` | No | Queries work with default parameters; no human tuning needed |
-| Cascade delete on document update | `graph_ingest.py` | No | Automatic cleanup; logged for audit |
-| Wiki compilation | `wiki_compiler.py` | No | Scaffold or LLM mode both produce valid wiki structure |
-| Retrieval (vector/node \+ keyword) | `graph_api.py` | No | Combined scoring uses fixed weights, works out-of-box |
-| Citation generation | `graph_api.py` | No | Automatic reverse lookup from source map |
-| Feedback capture | `` `frontend/graph_api.py` `` | No | Logs to wiki append-only query log |
+| Document extraction (DOCX/XLSX/PDF, et al →JSON) | `backend/process_raw_sources.py` | NO | Framework handles supported source formats and writes JSON output |
+| Wiki compilation | `backend/wiki_compiler.py` | No | Produces Markdown pages and an index markdown from extracted docs |
+| Retrieval and serving | `backend/api.py` | No | Local demo endpoints work out-of-box |
+| Citation-like trace payloads | `backend/api.py` | No | `/ask` returns demo trace and source payloads |
+| Feedback capture | `backend/api.py` | No | `/feedback` captures local feedback events |
 
 **Result:** Framework produces a valid, self-contained pseudo-graph and retrieval system without human judgment.
 
@@ -568,7 +537,7 @@ Human hands are genuinely needed in only one place, and it's outside RASCAL.
 | Role | Responsibility | HITL Required? | When |
 | :---- | :---- | :---- | :---- |
 | Framework Developer | Code, pipeline logic, schema | No | Framework is autonomous |
-| Corpus Operator | Run pipeline, manage metadata, maintain mappings | Minimal | Just fitting in `metadata_overrides.json` and `source_url_map.json` |
+| Corpus Operator | Run pipeline, manage metadata, maintain mappings | Minimal | Just filling in `metadata_overrides.json` and `config/source_url_map.json` |
 | Domain Expert | Verify extracted relationships are correct for your org/use case | Yes | Before making edges `human_reviewed`: true |
 | Product Manager et al. | UI/UX customization, fallback answers | Optional | If you want a tailored experience |
 
@@ -614,7 +583,7 @@ Do not casually mix these paths in documentation or handoffs. Different teams wi
 Before wider rollout, verify that the UI reflects the corpus you loaded:
 - branding and viable labels in `frontend/index.html`
 - category mapping and external links in `frontend/app.js`
-- frontend route contract and white-label checklist in `frontend/FRONTEND-README.md`
+- frontend route contract and white-label checklist in `frontend/README.md`
 This keeps the framework reusable across areas/units without implying that every deployment shares the same taxonomy or navigation model.
 
 **6. Run an Operator Review Pass**
@@ -634,32 +603,32 @@ At the end of onboarding, you should have:
 - a validated source-link map
 - a chosen runtime path with matching environment/configuration
 - a frontend aligned to the target vocabulary
-- two handoff documents kept current: this root README and `frontend/FRONTEND-README.md`
+- two handoff documents kept current: this root README and `frontend/README.md`
 
 
 ## High-Level Architecture
-This framework branch intentionally ships with no prebuilt wiki Markdown pages. The wiki/pages content shown below is runtime-generated from your own corpus and should remain git-ignored
+This framework branch intentionally ships with no prebuilt wiki Markdown pages. The `backend/wiki/` content shown below is runtime-generated from your own corpus and should remain git-ignored
 
-`raw/` → `process_raw_sources.py` + `artifacts/json_output/*.json`  
+`raw/` → `backend/process_raw_sources.py` + `backend/json/*.json`  
 ↓  
-`wiki_compiler.py`  
+`backend/wiki_compiler.py`  
 ↓  
-`wiki/pages/` \+ `wiki/index.json`  
+`backend/wiki/*.md` + `backend/wiki/index.md`  
 ↓  
-`graph_api.py` (loads wiki at startup)  
+`backend/api.py` (serves frontend and demo endpoints)  
 ↓  
 User asks a question  
 ↓  
-retrieval → LLM synthesis → answer + trace + citations
+demo retrieval flow → answer + trace-style payload
 
-**At set 1**, `metadata_overrides.json` and `source_url_map.json` are loaded and merged with extracted metadata to enrich the wiki with human judgment.
+At step 1, `metadata_overrides.json` is merged during wiki compilation, and `config/source_url_map.json` is available for source traceability mapping.
 
 
 ## Data Objects and Terminology
 To keep this README coherent, these terms are used consistently:
 - Raw/source documents: original input files in `raw/` (ex: DOCX, XLSX, JSON, et al)
-- JSON artifacts: extracted, structured intermediate files in `artifacts/json_output/`
-- Wiki pages: compiled Markdown knowledge pages in `wiki/pages/`
+- JSON artifacts: extracted, structured intermediate files in `backend/json/`
+- Wiki pages: compiled Markdown knowledge pages in `backend/wiki/`
 
 
 ## Canonical Type Field
@@ -686,220 +655,28 @@ In short, this project is best understood as an Azure-centric, policy-assistant 
 
 
 ## Data Flow Transparency
-**Note:** All file and document names in the section are generic examples. Your actual corpus will have different names, structures, and IDs. The pattern show here apply to any policy/procedure documents you bring, but can be substituted with other data contexts.
-
-**Stage 1: Raw Source Documents (`raw/`)
-Input: DOCX, XLSX, PPTX, PDF, HTML, JSON, CSV (user-supplied)
-Example (generic):
-```
-raw/
-policy-document-001.docx
-procedure-guideline-a.docx
-reference-framework.xlsx
-```
+**Note:** This section reflects the code currently present in `backend/ingest.py`, `backend/compile_wiki.py`, and `backend/api.py`.
 
 ### Data Flow and Human Input Points
-**Stage 2: Extract to JSON (`process_raw_sources.py` + `artifacts/json_output/`)**
-Process: 
-- reads each file in `raw/`
-- extracts content structure (paragraphs, tables, lists, runs)
-- infers document type (directive|requirement|procedure|form|concept|primary source)
-- generated machine-readable ID, captures source metadata
-- scaffolds a stub in `metadata_overrides.json`
-Output: One JSON file per source document
+**Stage 1: Raw Source Documents (`raw/`)**
+- Input formats supported by ingestion include: TXT, MD, HTML/HTM, XML, JSON, CSV, PDF, DOCX, PPTX, XLSX.
 
-**Schema (partial, generic example):**
-```json
-{
-"schema_version": "1.0.0", 
-"generated_utc": "2026-04-27T12:33:05Z", 
-"id": "policy-001-framework-overview-a7f3e2b9c1d4", "type": "directive". 
-"title": "Framework Overview and Purpose", 
-"summary": "Summary pending human review.", 
-"key_points": [], 
-"relationships":{ 
-"requires":[], 
-"depends_on": [], 
-"related_to":[]
-}, 
-"source": { 
-"file_name": "policy-document-001.docx", 
-"absolute_path": "C:\\...\\raw\\policy-document-001.docx", 
-"size_bytes":48289, 
-"created_utc": "2026-04-27T11:53:47Z", 
-"modified_utc": "2026-04-27T11:53:47Z"
-},
-"document_properties":{ 
-"author": "Author Name", 
-"last_modified_by": "Modifier Name", 
-"created_utc": "2025-02-28T13:43:00Z"
-}
-"conversion_summary":{ 
-"element_count": 44, 
-"paragraph_count": 43, 
-"table_count": 1, 
-"word_count": 823 
-}, 
-"elements":[ 
-{ 
-"type":"paragraph", 
-"element_index":0, 
-"style":"Heading1", 
-"text": "Framework Overview and Purpose", "runs": [...]
-},
-...
-]
-}
-```
-**Location:** `artifacts/json_output/policy-document-001.json`
+**Stage 2: Extract to JSON (`backend/process_raw_sources.py` → `backend/json/`)**
+- Reads each supported file under the provided source path.
+- Extracts text content and writes one JSON document per source file under `backend/json/`.
 
-### Stage 3: Human Curation (Edit these Files)
-`metadata_overrides.json` -- Enrich extracted metadata with human judgment (generic example):
-```json
-{
-"documents":{
-"policy-document-001.docx": {
-"id": "policy-001-framework-overview-a7f3e2b9c1d4",
-"type": "directive",
-"title": "Framework Overview and Purpose",
-"summary": "Establishes the foundational principles and scope of the policy framework...",
-"key points":[
-"All departments must follow this framework.",
-"Annual reviews required.",
-"Exceptions require director approval."
-]
-"relationships": {
-"requires":["Core Principles Guide"],
-"depends_on": [].
-"related_to": ["Implementation Procedures"]
-}
-}
-}
-}
-```
+**Stage 3: Human Curation (`metadata_overrides.json` and `config/source_url_map.json`)**
+- Update `metadata_overrides.json` to curate summaries, key points, and relationships.
+- Update `config/source_url_map.json` to maintain source traceability mappings.
 
-**`config/source_url_map.json`** -- Map documents to their source URLs (generic example):
-```json
-"by_doc_id": {
-"policy-001-framework-overview-a7f3e2b9c1d4": "https://sharepoint.company.com/sites/policies/poll
-"by_source_file": {
-"policy-document-001.docx": "https://sharepoint.company.com/sites/policies/policy-001.docx"
-}
-"by_title":{
-"Framework Overview and Purpose": "https://sharepoint.company.com/sites/policies/policy-001.docx
-}
-}
-```
+**Stage 4: Compile Wiki (`backend/wiki_compiler.py` → `backend/wiki/`)**
+- Loads extracted docs and optional metadata overrides.
+- Writes markdown pages into `backend/wiki/`.
+- Writes `backend/wiki/index.md` as the generated wiki index.
 
-**Stage 4: Compile to Wiki (`wiki_compiler.py` → `wiki/pages/`)**
-Process: 
-- loads JSON from `artifacts/json_output/
-- Merges enrichments from `metadata_overrides.json`
-- looks up source URLs from `config/sources_url_map.json`
-- converts content to Markdown, organized by document type
-- generates index JSON (`wiki/index.json`) for frontend navigation
-Bucket definition:
-- A bucket is the wiki subdirectory where a compiled wiki page is written
-- Buckets are derived from type (for example: `policies/`, `summaries/`, `primary_source`)
-Output: Runtime-generated Markdown pages organized by bucket
-
-```
-wiki/pages/
-policies/    (type: directive or requirement)
-  policy-001.md
-  policy-002.md
-procedures/    (type: procedure or form)
-  procedure-001.md
-
-et al., ad nauseam
-```
-
-Example Markdown Output (generic)
-```markdown
-# Framework Overview and Purpose
-## What this Covers
-Establisheds the foundations
-## Control Points
-- All must follow this framework
-- reviews required
-- etc
-## Source Link
-- View in Sharepoint/Drive [Framework](http://www.whatver.com/document.docx)
-- See detailed source summary [Summary](./summaries/policy.md)
-## Detailed Guidance
-### Purpose
-- provide clear purpose
-### Scope
-- provide clear scope
-### Responsibility
-- Curator, operator, etc.
-```
-
-**Stage 5: Runtime Wiki Index (`wiki/index.json`)**
-Process:
-- Built by `wiki_compiler.py` at compile time
-- indexed by the API on startup
-- consumed by the frontend to populate the sidebar navigation
-
-Structure (generic example):
-```json
-{
-"schema_version": "0.1.0",
-"generated_utc": "2026-04-27T13:05:00Z",
-"documents":[
-{
-"id": "policy-001",
-"type": "policy",
-"title":"Policy 1",
-"summary":"Establishes 1st policy...",
-"wiki_path":"policy-001.md",
-"bucket":"policies",
-"relationships":{
-"requires":[...]
-"depends_on":[...]
-"related_to":[...]
-},
-"source_url":"http://www.whatever.com/..."
-},
-...
-]
-}
-```
-
-**Stage 6: Retrieval & Serving (`graph_api.py`)**
-Process:
-- local `wiki/index.json` at startup
-- reads all Markdown pages from `wiki/pages/`
-- on user query:
-  - retrieves relevant pages (vector + keyword search)
-  - includes metadata, relationships, and source links
-  - sends to LLM for synthesis
-  - returns answer + trace + citations
-    
-**Data served to frontend (generic example):**
-```json
-{
-"answer":"The framework requires that all...",
-"trace":"{
-"query":"What is the purpose of this...?",
-"retrieved_docs":[
-}
-"id":"policy-001",
-"score":0.92
-"excerpt":"All the policies are mandated...",
-"source_url":"http://www.whatever.com/policy-001.docx"
-}
-]
-},
-"citations":[
-{
-"doc_id":"policy-001",
-"page":"Policies",
-"link":"http://www.whatever.com/policy-001.doc"
-}
-]
-}
-```
+**Stage 5: Serve UI and Endpoints (`backend/api.py`)**
+- Serves frontend assets (`frontend/`) and demo endpoints such as `/health`, `/ask`, `/feedback`, and `/wiki_index`.
+- Returns answer and trace-style payloads for local testing.
 
 
 ## Summary: Where Data Flows & Where Human Input Happens
@@ -907,12 +684,11 @@ Process:
 | Stage | Input | Process | Output | Human Input? |
 | :---- | :---- | :---- | :---- | :---- |
 | 1 | User uploads files | Drop in `raw/` | .docx, .xlsx, .pdf | Upload |
-| 2 | `raw/` files | Extract & classification | `artifacts/json_output/*.json` | Automatic |
-| 3 | JSON \+ stubbed overrides | Enrich metadata | `metadata_overrides.json` (edited) | REQUIRED |
-| 3b | JSON | Map source URLs | `config/source_url_map.json` (edited) | REQUIRED |
-| 4 | JSON \+ overrides \+ URL map | Wiki compilation | `wiki/pages/*` \+ `wiki/index.json` | Automatic |
-| 5 | Markdown wiki | API Loads & indexes | In-memory wiki \+ vector DB | Automatic |
-| 6 | Query \+ retrieved pages | LLM synthesis | Answer \+ trace \+ citations | Automatic |
+| 2 | `raw/` files | Text extraction | `backend/json/*.json` | Automatic |
+| 3 | JSON + overrides | Enrich metadata | `metadata_overrides.json` (edited) | REQUIRED for curated runs |
+| 3b | JSON | Map source URLs | `config/source_url_map.json` (edited) | REQUIRED for traceability |
+| 4 | JSON + overrides | Wiki compilation | `backend/wiki/*.md` + `backend/wiki/index.md` | Automatic |
+| 5 | Wiki markdown | Serve UI/API | Local endpoints on `backend/api.py` | Automatic |
 
 
 ## End-to-end Workflow
@@ -923,9 +699,9 @@ This is the fastest way to understand how raw/source documents become answers us
 
 ## Practical Walkthrough
 1. Add a few representative raw source documents to `raw/`
-2. Run extraction to produce JSON artifacts in `artifacts/json_output/`
+2. Run extraction to produce JSON artifacts in `backend/json/`
 3. curate `metadata_overrides.json` and `config/source_url_map.json`
-4. compile wiki pages into `wiki/pages` and `wiki/index.json`
+4. compile wiki pages into `backend/wiki/` and `backend/wiki/index.md`
 5. start API/UI and ask questions
 6. inspect trace/citations in the frontend to validate grounding
 7. use feedback: thumbs-down logs quality issues, thumbs up + save writes useful answers back to the wiki
@@ -936,8 +712,8 @@ This is the fastest way to understand how raw/source documents become answers us
 1) Install dependencies
 ``` bash
 #create and activate an isolated environment for this project
-python -m venv.venv
-.\venv\scripts\activate.ps1    # Windows PowerShell
+python -m venv .venv
+source .venv/bin/activate    # macOS/Linux
 
 #install parser, API, and Azure integration dependencies
 pip install -r requirements.txt
@@ -946,41 +722,26 @@ pip install -r requirements.txt
 2) Add your source documents
 Place .doc, .pdf, etc in `raw/`
 
-3) Build local artifacts (Scaffold Mode - Default)
+3) Build local artifacts
 ```bash
-python backend/run_pipeline.py --raw-dir --skip-ingest
+python backend/process_raw_sources.py raw --output-root backend/json
+python backend/wiki_compiler.py raw --output-root backend/json --wiki-root backend/wiki
 ```
 
-This runs the full pipeline in scaffold mode by default (deterministic, no LLM). See Compilation modes for LLM-enhanced compilation.
+This runs ingestion followed by wiki compilation using the current V2 entry points.
 
 Common variations:
-- use `--wiki-mode llm` once Azure OpenAI is configured and you want richer page compilation
-- use `--pipeline-mode legacy` only if you need the older `docx_to_json.py` + `synth_metadata.py` split flow
-- omit `--skip-ingest` when you want the pipeline to push graph data into Cosmos DB
-- add `--run-cascade-worker` after ingestion when you want pending tombstones physically cascaded
-- add `--cascade-dry-run` with `--run-cascade-worker` to preview cascade operations without writes
+- replace `raw` with a specific file path to ingest a single document
+- change `--output-root` if you want JSON artifacts outside `backend/json`
+- change `--wiki-root` if you want compiled Markdown outside `backend/wiki`
+- pass `--metadata` on `backend/wiki_compiler.py` to use a non-default metadata override file
 
 4) Start the API
 ```bash
-python backend/graph_api.py --local-mode --simulate-llm --port8000
+python backend/api.py
 ```
 
-4b) One-command local launcher (optional)
-If you prefer a wrapper script for local testing:
-```powershell
-.\start_local_ui.ps1
-```
-
-This script:
-- activates `.venv` when present
-- starts `backend/graph_api.py` in local simulation mode on port 8000
-- writes PID state to `.api_pid.txt`
-- writes logs to `artifacts/local_api.out.log` and `artifacts/local_api.err.log`
-
-To stop the local API this way:
-```powershell
-.\stop_local_ui.ps1
-```
+The local API serves the frontend shell and demo endpoints at port 8000 by default.
 
 5) Open the app
 Browse to http://127.0.0.1:8000
@@ -1001,21 +762,19 @@ If your goal is only to prove the framework works end-to-end locally, the six st
 
 ## Optional to Customize
 After the framework is running, the most common customization steps are:
-1. Replace the default taxonomy in `metadata_definitions.json` if your corpus is not best described as directive/requirement/procedure/form.
-2. Replace template fallback content in `config/fallback_qa.json` and `config/fallback_templates.json` so low-evidence responses sound like your organization
-3. Add Azure OpenAI and Cosmos settings to `.env` when moving from local scaffold mode to LLM or cloud-backed operation.
-4. Repoint pipeline directories or switch modes with `backend/run_pipeline.py` flags if your corpus layout or runtime path differs from the default.
-5. Rebrand the UI and adapt type tabs in `frontend/index.html` and `frontend/app.js` when reusing the framework for another team.
+1. Curate `metadata_overrides.json` with domain-specific summaries, key points, and relationships.
+2. Maintain source traceability in `config/source_url_map.json` for authoritative upstream links.
+3. Repoint extraction and wiki output directories with `backend/process_raw_sources.py --output-root ...` and `backend/wiki_compiler.py --output-root ... --wiki-root ...` if your corpus layout differs from the default.
+4. Rebrand the UI and adapt type tabs in `frontend/index.html` and `frontend/app.js` when reusing the framework for another team.
 
 
 ## Clone and Customize Handoff (No Bundled Data)
 When stakeholders clone this framework, the fastest path is:
 1. Add representative file types into `raw/`
-2. Run python `backend/run_pipeline.py --raw-dir --skip-ingest`
+2. Run `python backend/process_raw_sources.py raw --output-root backend/json` and then `python backend/wiki_compiler.py raw --output-root backend/json --wiki-root backend/wiki`
 3. Curate `metadata_overrides.json` for summaries, key points, and relationships
 4. Curate `config/source_url_map.json` for source traceability links.
-5. Validate parser behavior with `.\smoke_validate_source_formats.ps1`
-6. Start local UI with `.\start_local_ui.ps1` and review grounded answers/citations.
+5. Start local UI with `python backend/api.py` and review grounded answers/citations.
 This sequence intentionally keeps onboarding lightweight for first-time adopters while preserving traceability and curation controls.
 
 
@@ -1026,8 +785,8 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 
 ## Validation Checklist After a Build
 - Note: this checklist applies after you run a local build using your own source corpus.
-- `artifacts/json_output/` contains one `.json` per source document
-- `wiki/pags/policies|procedures|concept/` contains generated `.md` pages
+- `backend/json/` contains extracted `.json` files
+- `backend/wiki/` contains generated `.md` pages and `backend/wiki/index.md`
 - `metadata_overrides.json` has curated entries under documents
 - `config/source_url_map.json` has URL mappings for docs you expect to cite
 - `GET/health` returns healthy mode status once the API is running
@@ -1038,31 +797,20 @@ This sequence intentionally keeps onboarding lightweight for first-time adopters
 | Endpoint | Description |
 | :---- | :---- |
 | `GET/` | Frontend shell |
+| `GET/index.html` | Frontend shell HTML |
+| `GET/styles.css` | Frontend stylesheet |
+| `GET/app.js` | Frontend app script |
+| `GET/graph_map.js` | Graph map script |
+| `GET/faq.json` | FAQ payload for UI |
 | `GET/graph-map` | Relationship map UI (currently templatized until corpus ingest) |
 | `GET/graph_map_data` | Graph nodes/edges payload for visualization (currently scaffolded example data) |
 | `GET/health` | Mode and service health |
-| `POST/ask` | Grounded answer with retrieval trace and citations |
+| `POST/ask` | Demo answer with trace-style payload |
 | `GET/wiki_index` | Wiki catalog for the documents sidebar |
-| `GET/wiki_freshness` | Freshness/staleness view used by FAQ health and Curator Space (local + cloud modes). |
-| `GET/cascade_status` | Cascade/tombstone lifecycle counts for Curator Space (cloud metrics; local mode reports unsupported) |
-| `GET/query_telemetry_summary` | Aggregated Cosmos query-shape telemetry and index recs for tuning |
-| `GET/graph_analysis_summary` | Baseline graph analytics (connectors, components, isolated-node counts) for Curator Space health and curation prioritization |
-| `GET/wiki_/{page_id}` | Single wiki page payload |
-| `POST/wiki_mark_reviewed` | Mark a wiki page as reviewed (local mode) and append curator audit metadata |
-| `GET/raw/{file_name}` | Fetch a raw source file by filename when available |
-| `GET/schema/document` | Document schema contract metadata |
-| `GET/schema/lint` | Lint schema contract and allowed values |
-| `GET/lint/document` | Runtime lint report over loaded wiki pages |
-| `GET/graph_connection/explain` | Explain path connectivity between two graph nodes (`from_id`, `to_id`, `max_hops`); in cloud mode, prefers materialized path docs with live-traversal fallback |
-| `POST/feedback` | Log thumbs up/down rating (includes `cited_docs` captured from retrieval) |
-| `POST/feedback-triage` | Update triage status and curator note on a negative-feedback entry (pending|resolved|proposed_wiki|proposed_override) |
-| `POST/feedback-propose-wiki` | Turn a negative feedback entry into a Markdown draft under `wiki/pages/curation_drafts/` |
-| `GET/feedback-review` | Curator space dashboard (feedback triage + wiki health + audit trail). Open directly at http://127.0.0.1:8000/feedback-review when the local API is running |
-| `GET/feedback-data` | Raw negative feedback entries (newest-first JSONL, ready by the triage dashboard) |
-| `GET/triage_audit` | Curator audit events feed (used by Curator Space audit panel) |
-| `POST/wiki` | Save a generated answer as a new wiki page |
-
-Curator Space health panel includes cascading monitoring, query telemetry recommendations, and baseline graph analytics via `/cascade_status`, `/query_telemetry_summary`, and `/graph_analytics_summary`.
+| `GET/wiki/{page_id}` | Single wiki page payload (dynamic route) |
+| `GET/feedback-review` | Curator space page |
+| `POST/feedback` | Record feedback event |
+| `POST/wiki` | Create a wiki draft response message |
 
 
 ## Curator Health in Plain Language (Non-Developer Guide)
@@ -1121,7 +869,7 @@ Framework-level frontend customizations are concentrated in:
 - `frontend/index.html` for product naming, panel labels, and visible copy
 - `frontend/app.js` for category mapping, external document links, and wiki catalog rendering
 - `frontend/styles.css` for layout and visual treatment
-- `frontend/FRONTEND-README.md` for the UI-specific extension guide
+- `frontend/README.md` for the UI-specific extension guide
 At the moment, this map should be read as a template-based visualization layer. Because no real corpus has been ingested yet, the nodes and edges shown are scaffolded example relationships rather than live graph structures from source documents.
 
 
@@ -1130,7 +878,7 @@ RASCAL is intentionally not a ChatGPT-style persistent chat product.
 - There is no transcript-style cross-session chat memory ("hot caching" to be included)
 - Answers are generated from current retrieval over the compiled wiki/source artifacts.
 - Durable knowledge changes happen only through explicit write-back flows (for example, `POST /wiki` or curator-approved draft promotion)
-- Operational query logs may be retained for audit/analystics (`query_log.md` and `query_log.json`), but those logs are not treated as canonical wiki knowledge and are not a substitute for write-back.
+- Operational logging can be added by downstream deployments, but logs are not treated as canonical wiki knowledge and are not a substitute for write-back.
 
 
  ## UI/UX Note: Curator Access Visibility
@@ -1149,13 +897,11 @@ RASCAL is intentionally not a ChatGPT-style persistent chat product.
  *Mermaid Diagram?*
 
  Flow Highlights:
- - Thumbs up → direct write-back to wiki (fast path)
- - Thumbs down → enters triage queue with cited documents and user comment
- - Curator dashboard (`/feedback-review`) shows pending entries with color-coded status, cited-doc pills, and three actions
- - Create wiki-draft → generates Markdown in `wiki/pages/curation-drafts/` for human approval before write-back
- - Mark resolved/flag override → routes to operational tracking (not immediate wiki writes)
+ - `POST /feedback` captures feedback events
+ - Curator dashboard is served at `/feedback-review`
+ - `POST /wiki` creates a wiki draft-style response payload
 To keep the root README focused on the pipeline and runtime setup, detailed frontend documentation is now maintained in:
-- `frontend/FRONTEND-README.md`
+- `frontend/README.md`
 That guide covers UI architecture, customization points, type taxonomy mapping, feedback review, and endpoint expectations.
 
 
@@ -1163,11 +909,11 @@ That guide covers UI architecture, customization points, type taxonomy mapping, 
 ```
 backend/    # API, retrieval, ingestion, pipeline scripts
 frontend/    # Static HTML/CSS/JS client (no build step)
-config/    # Fallback answers/templates, source URL mapping, schema notes
-metadata_*.json    # Taxonomy definitions and human metadata overrides
+config/    # Source URL mapping and related runtime config
+metadata_overrides.json    # Human curation layer for summaries/key points/relationships
 raw/    # Source documents (user supplied, git-ignored in this branch)
-artifacts/    # Generated outputs - json + operational logs (git-ignored)
-wiki/    # Runtime wiki index and page JSON used by the API (git-ignored)
+backend/json/    # Generated extraction artifacts
+backend/wiki/    # Generated markdown wiki output
 ```
 
 ## Framework Docs

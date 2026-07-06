@@ -1,4 +1,4 @@
 {
-  "path": "/tmp/rascal-check/sample.txt",
-  "text": "hello from rascal\n"
+  "path": "backend/wiki/sample.md",
+  "text": "# sample\n\n## Source Extract\n\nhello from rascal\n"
 }
