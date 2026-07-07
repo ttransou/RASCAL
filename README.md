@@ -564,7 +564,7 @@ Human hands are genuinely needed in only one place, and it's outside RASCAL.
 - Example: RASCAL might extract "Policy A requires Policy B" from document text, but a legal or policy expert needs to confirm that this relationship is *intended* and *accurate* for your operating model
 - If a relationship is wrong, the entire downstream dependency is tainted.
 
-** How to handle this:**
+**How to handle this:**
 1. Run RASCAL extraction (automatic, no review needed)
 2. Operator reads extracted relationships and metadata
 3. **Domain expert reviews and marks as verified** ← This is HITEL
@@ -588,7 +588,7 @@ Human hands are genuinely needed in only one place, and it's outside RASCAL.
 4. Users: Query with filters to focus on verified chains (automatic retrieval)
 
 
-## Onboarding RASCAL
+## Onboarding RASCAL 👟
 Use this sequence when onboarding RASCAL for a new corpus or internal product surface.
 
 **1. Define the Operating Model**
@@ -711,7 +711,7 @@ In short, this project is best understood as a local-first, provider-open implem
 
 **Stage 4: Compile Wiki (`backend/wiki_compiler.py` → `backend/wiki/`)**
 - Loads extracted docs and optional metadata overrides.
-- Writes markdown pages into `backend/wiki/`.
+- Writes Markdown pages into `backend/wiki/`.
 - Writes `backend/wiki/index.md` as the generated wiki index.
 
 **Stage 5: Serve UI and Endpoints (`backend/api.py`)**
@@ -789,7 +789,7 @@ Common variations:
 python backend/api.py
 ```
 
-The local API serves the frontend shell and demo endpoints at port 8000 by default.
+The local API serves the frontend shell and demo endpoints on port 8000 by default.
 
 5) Open the app
 Browse to http://127.0.0.1:8000
@@ -973,7 +973,7 @@ RASCAL is intentionally not a ChatGPT-style persistent chat product.
 
 
  ## UI/UX Note: Curator Access Visibility
- Curator Space is intentionally discoverable but de-emphasized in the main UI. The sidebar includes an **Internal: Curator Space** link that opens `/feedback-review` in a new tab/window. This keeps curation workflows reachable for operators while avoiding prominence in the primary end-user chat flow.
+Curator Space is intentionally discoverable but de-emphasized in the main UI. The sidebar includes an **Internal: Curator Space** link that opens `/feedback-review` in a new tab/window. This keeps curation workflows reachable for operators while avoiding prominence in the primary end-user chat flow.
 
  This pattern also keeps room for future role-based or environment-specific access controls without changing the core user journey.
 
@@ -1088,12 +1088,6 @@ The core pipeline is automated, but quality still depends on human curation in:
 This PoC assumes wiki ingestion is deliberate rather than ambient. Humans select which source documents to place in `raw/`, review the generated artifacts, and curate the metadata layer before treating the corpus as part of the assistant's knowledge base.
 
 As corpus size grows, the effort to keep those two files complete and accurate increases as well. That is the main scaling limiter in this PoC, not extraction speed.
-
-
-
-## Future Enhancements
-
-*moved to its own documentation*
 
 
 ## References
