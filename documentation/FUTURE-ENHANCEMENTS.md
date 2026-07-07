@@ -19,7 +19,7 @@ All enhancements are optional; however, the 🛠 realistic short-term enhancemen
 
 🛠 **Team governance and identity (optional):**
     
-Add option Entra ID authentication, role-based permissions (read, write, curate, admin), and curator workflow queues for teams that need stronger ownership, auditability, and controlled write-back. Not required for small teams or low-risk corpora; enable when complexity and governance needs increase.
+Add optional enterprise identity-provider authentication, role-based permissions (read, write, curate, admin), and curator workflow queues for teams that need stronger ownership, auditability, and controlled write-back. Not required for small teams or low-risk corpora; enable when complexity and governance needs increase.
 
 
 🛠 **User-scoped session recap cache ("hot cache"):**
@@ -38,9 +38,9 @@ Scope boundary: the recap cache is continuity-only and separate from canonical k
 Add OCR plus vision-language model processing for scanned/image-heavy PDFs and diagrams, with extracted visuals/figure references linked into wiki pages for click-to-view evidence.
 
 
-🛠 **Curation operations dashboard (originally implemented in May 2026, v.1)**:
+🛠 **Curation operations dashboard (V1 baseline recovery target)**:
     
-Negative feedback entries are enriched with `cited_docs` at the time of capture. Curators use the triage dashboard (/feedback-review) to review the queue, add notes, and dispatch entries to three outcomes: create a Markdown wiki draft (/feedback-propose-wiki), flag as override-needed, or mark resolved. Status-filter dropdown, color-coded status badges, per-entry cited-document pills, compact exec-style ❔ tooltips, and a Curator Audit Trail panel to be put into place. Link to "Team Governance and Identity enhancement)
+Target behavior: enrich negative feedback entries with `cited_docs` at capture time, and provide a triage dashboard (`/feedback-review`) that supports queue review, notes, and three outcomes: create Markdown wiki draft (`/feedback-propose-wiki`), flag override-needed, or mark resolved. Include status filtering, color-coded badges, cited-document pills, compact tooltips, and a Curator Audit Trail panel.
 
 
 🛠 **Confidence-gated write-back proposals:**
@@ -48,14 +48,14 @@ Negative feedback entries are enriched with `cited_docs` at the time of capture.
 Instead of fully manual write-back, answers that meet a quality threshold (e.g., a high grounding score and a sufficient citation count) are auto-proposed for write-back, but still require curator approval before the wiki is updated. This accelerates the compounding loop as good answers surface automatically rather than waiting for a curator to notice them, while keeping humans in the loop on every write.
 
 
-🛠 **Knowledge quality and freshness tracking (originally implemented in May 2026, v.1):**
+🛠 **Knowledge quality and freshness tracking (V1 baseline recovery target):**
     
-Wiki pages now expose freshness metadata (score/tier/stale reasons), freshness is visible in the document sidebar, FAQ includes explainability guidance, and Curator Space includes a live wiki-health panel plus one-click Mark Reviewed actions (with optional curator-note audit trail). Curator health will include telemetry-driven index recommendations and baseline graph analytics (/query_telemetry_summary, /graph_analytics_summary) with framework-level curator parameter defaults. Additionally: owner assignment, SLA-style freshness policy tuning, and deeper governance/reporting automation.
+Target behavior: wiki pages expose freshness metadata (score/tier/stale reasons), freshness is visible in the document sidebar, FAQ includes explainability guidance, and Curator Space includes a live wiki-health panel plus one-click Mark Reviewed actions (with optional curator-note audit trail). Curator health should include telemetry-driven index recommendations and baseline graph analytics (`/query_telemetry_summary`, `/graph_analytics_summary`) with framework-level parameter defaults.
 
 
-🛠 **Stale-page detection (originally implemented in May 2026, v.1):**
+🛠 **Stale-page detection (V1 baseline recovery target):**
     
-Stale-page detection will include explicit freshness states and reason codes (including source-vs-ingest-vs-review-signals), configurable policy controls, and cloud-wirable source-change probing. Additionally: optional automation for re-run queueing and scheduled remediation workflows without a full pipeline rebuild.
+Target behavior: include explicit freshness states and reason codes (including source-vs-ingest-vs-review signals), configurable policy controls, and optional source-change probing hooks. Optional extension: automated re-run queueing and scheduled remediation workflows without a full rebuild.
 
 
 🛠 **Conflict detection:**
@@ -63,9 +63,9 @@ Stale-page detection will include explicit freshness states and reason codes (in
 Surface cases where two documents give contradictory answers to the same question (e.g., two versions of a policy disagree). Flag these pairs to curators before they reach users, so the knowledge base doesn't silently serve ambiguous or contradictory guidance.
 
 
-🛠 **Policy expiry/sunset tracking (originally implemented May 2026, v.1):**
+🛠 **Policy expiry/sunset tracking (V1 baseline recovery target):**
     
-Freshness will support policy-expiry signals (including expiring-soon and expired states), configurable controls for expiry policies, and UI-visible expiry status cues for curator triage. Additionally: optional scheduled remediation workflows (e.g., auto-queueing expiring/expired policies for revalidation and refresh).
+Target behavior: freshness supports policy-expiry signals (including expiring-soon and expired states), configurable controls for expiry policies, and UI-visible expiry status cues for curator triage. Optional extension: scheduled remediation workflows (for example, auto-queueing expiring/expired policies for revalidation and refresh).
 
 
 🛠 **Curation acceleration:**
@@ -73,9 +73,19 @@ Freshness will support policy-expiry signals (including expiring-soon and expire
 Reduce the manual effort per feedback entry, e.g., by generating suggested edits from the LLM for the original Q&A pairs, applying one-click diffs to the relevant wiki page, and batch-triaging clusters of similar complaints. Keeps the curator queue draining faster than it fills.
 
 
-🛠 **AI-assisted curation suggestions:**
+✅ **AI-assisted curation suggestions (implemented, July 2026):**
     
-Draft suggested summaries, key points, and relationships from the extracted JSON for human review and approval. The framework already has the extraction layer; this closes the gap that makes `metadata_overrides.json` feel like homework. Instead of authoring overrides from scratch, curators confirm, edit, or reject LLM-drafted proposals.
+The framework now includes an optional local NLP suggestion workflow via `backend/suggest_metadata.py` that drafts summary/key-point/entity/term suggestions from extracted JSON artifacts. Suggestions are output to a separate JSON file and are explicitly guardrailed as human-review-required (`do_not_auto_apply`, `human_review_required`) so curated metadata is never overwritten automatically.
+
+Implemented details:
+- model-profile selection for corpus/runtime context (`framework-default`, `lightweight`, `balanced`, `high-accuracy`)
+- explicit model override support (`--model ...`)
+- model availability check mode (`--check-models`) with deterministic fallback to `blank-en-sentencizer`
+- local-first operation with no per-call API billing requirement for this feature
+
+Optional follow-on work:
+- corpus-level quality evaluation and heuristic tuning for suggestions
+- organization-specific OSS/legal sign-off for selected model packages before production rollout
 
 
 🛠 **Structured wiki diff on re-run:**
@@ -111,35 +121,35 @@ Keep the framework core domain-agnostic and lightweight, while allowing implemen
     
 Surface corpus-level insights, which documents are never retrieved, which questions go unanswered ot return low-confidence answers, which wiki pages are most cited vs. never cited. Helps identify gaps to prioritize for authoring or re-ingestion rather than discovering them through user complaints.
    
-- Query analytics view: `query_log.json` is already written on every /ask call; a lightweight dashboard showing most-queried concepts, most-cited documents, unanswered questions, and coverage gaps would make the compounding-loop case tangible to stakeholders; the data is there; it just needs a read path and view.
+- Query analytics view: add a lightweight dashboard showing most-queried concepts, most-cited documents, unanswered questions, and coverage gaps. Use local query telemetry artifacts and summary endpoints as the baseline source.
 
 
-🛠 **In-app source document viewer (originally implemented June 2026, v.1):**
+🛠 **In-app source document viewer (V1 baseline recovery target):**
     
-Citation cards in the chat panel offer three actions per cited document: open wiki entry opens the existing wiki knowledge model; view source opens a new in-app source document viewer model that renders the original document in high fidelity directly inside the UI; and source doc 🡕 remains as an external link (the 🡕 symbol signals it leaves the app).
+Target behavior: citation cards in the chat panel offer three actions per cited document: open wiki entry, view source in-app, and source doc external link.
     
-The viewer renders the full processed source artifact - headings h1-h6, inline bold/italix/underline formatting, and multi-column tables - using the structured elements[] produced by the ingestion pipeline. A new read-only API endpoint (GET /source_doc/{doc_id}) resolves a document ID to its JSON artifact and returns a slimmed, renderable payload; a lightweight in-memory index built at startup keeps lookups fast, with no additional I/O per request.
+Target behavior: render processed source artifacts (headings, inline emphasis, and tables) from structured ingestion output. Add read-only API endpoint `GET /source_doc/{doc_id}` that resolves doc ID to a renderable payload.
    
 The distinction between the two in-app views is intentional: the wiki model shows the curated, compiled knowledge layer; the source doc viewer shows what the original document actually says, so users can verify grounding without leaving the application.
     
 To do: table of content/section jump for long documents, keyboard navigation between the two modals, deep-link support so a specific source document can be opened directly by URL.
 
 
-🛠 **Citation action styling normalization (originally implemented June 2026, v.1):**
+🛠 **Citation action styling normalization (V1 baseline recovery target):**
    
 The three citation actions (open wiki entry, view source, raw/source doc 🡕) should share one consistent button/link style system for typography, spacing, border treatment, and hover/focus behavior. This avoids mixed-control appearance in citation drawers and improves scannability for non-technical users.
     
 Planned: optional visual differentiation by action intent (for example, neutral for in-app actions and subtle outbound accent for external-link actions) if product design later wants stronger affordance separation.
 
 
-🛠 **Local-mode answer fallback hardening (originally implemented June 2026, v.1):**
+🛠 **Local-mode answer fallback hardening (V1 baseline recovery target):**
    
-Local retrieval mode should no longer return excerpt-only output as the primary response in normal question flows. The fallback should always return a direct answer structure (Summary, Key Rules or Thresholds, Supporting Evidence) so framework behavior stays answer-first even when optional model-backed synthesis is disabled or unavailable.
+Target behavior: local retrieval mode does not return excerpt-only output as the primary response in normal question flows. The fallback returns a direct answer structure (Summary, Key Rules or Thresholds, Supporting Evidence) so framework behavior stays answer-first even when optional model-backed synthesis is disabled or unavailable.
    
 Planned: add regression coverage to lock this behavior for framework starter projects and prevent reintroduction of excerpt-only answer templates.
 
 
-🛠 **Graph contract + schema dictionary foundation (originally implemented June 2026, v.1):**
+🛠 **Graph contract + schema dictionary foundation (V1 baseline recovery target):**
    
 Framework-level graph structure should be documented explicitly in GRAPH_CONTRACT.md (schema versioning policy, canonical ID/key rules, invariant, advisory-vs-strict enforcement model, and valid/invalid examples). A new code-side dictionary module `backend/graph_schema.py` centralizes schema constants used by validators and smoke checks (field sets, strength ranges/defaults, canonical edge keying).
    
@@ -148,36 +158,36 @@ Also, strict write-path validation should include ISO-8601 timestamp normalizati
 Addition: add schema-version checks in more API write surfaces.
 
 
-🛠 **Structured validation flags for ingest diagnostics (originally implemented June 2026, v.1):**
+🛠 **Structured validation flags for ingest diagnostics (V1 baseline recovery target):**
     
 Advisory/strict edge validation should emit stable machine-readable warning codes (for example: EDGE_MISSING_STRUCTURAL, EDGE_WEIGHT_CLAMPED, EDGE_DUPLICATE_SKIPPED) in `backend/graph_ingest.py`, with code definitions in `backend/graph_schema.py`. This enables cleaner telemetry aggregation and future dashboarding without changing existing validation semantics.
    
 Additionally: aggregate warning-code counts in smoke output and add optional per-code thresholds in CI.
     
     
-🛠 **Idempotent upsert semantics for node/edge writes (originally implemented June 2026, v.1):**
+🛠 **Idempotent upsert semantics for node/edge writes (V1 baseline recovery target):**
    
-Graph ingest should use deterministic edge storage identity and partitioning (edge_storage_id, edge_partition_key) derived from canonical logic edge keys, and normalize the write-path identifier before upsert. Re-running ingestion with equivalent input now converges to stable graph storage identities instead of drifting due to formatting differences.
+Target behavior: graph ingest uses deterministic edge storage identity and partitioning (edge_storage_id, edge_partition_key) derived from canonical logic edge keys, and normalizes write-path identifiers before upsert. Re-running ingestion with equivalent input converges to stable graph storage identities instead of drifting due to formatting differences.
     
 Additionally, add a repeated-ingest regression test harness to automatically assert stable counts/IDs across back-to-back runs.
 
 
-🛠 **Retrieval guardrails baseline (originally implemented June 2026, v.1):**
+🛠 **Retrieval guardrails baseline (V1 baseline recovery target):**
     
-The /ask path now applies explicit guardrails for retrieval and response shaping: top_k/keyword_k ceilings, seed-id and neighbor fan-out caps, traversal depth limit, request timeout budget, and context/answer size ceilings. Guardrails are configurable via ASK/* environment variables and include safe timeout fallback behavior when the budget is exceeded before LLM synthesis.
+Target behavior: the /ask path applies explicit guardrails for retrieval and response shaping: top_k/keyword_k ceilings, seed-id and neighbor fan-out caps, traversal depth limit, request timeout budget, and context/answer size ceilings. Guardrails are configurable via ASK/* environment variables and include safe timeout fallback behavior when the budget is exceeded before synthesis.
     
 Additionally, add a deterministic evaluation set and compare quality/latency before vs after guardrail tuning.
 
 
-🛠 **Deterministic tie-break retrieval ranking (originally implemented June 2026, v.1):**
+🛠 **Deterministic tie-break retrieval ranking (V1 baseline recovery target):**
    
-Retrieval ranking should resolve ties deterministically using stable priority order: human_reviewed first, curated provenance/status second, then numeric relevance scores (combined_score, vector_score, keyword_score) and stable ID fields. This is applied to both cloud and local retrieval paths to reduce ranking jitter among equivalent-score candidates.
+Target behavior: retrieval ranking resolves ties deterministically using stable priority order: human_reviewed first, curated provenance/status second, then numeric relevance scores (combined_score, vector_score, keyword_score) and stable ID fields. This applies to local and adapter-backed retrieval paths to reduce ranking jitter among equivalent-score candidates.
     
 Additionally, enrich source artifacts with stronger review/provenance coverage so tie-break priority has a broader effect beyond score-level ordering.
 
 
-🛠 **Robust no-result fallback hierarchy (originally implemented June 2026, v.1):**
+🛠 **Robust no-result fallback hierarchy (V1 baseline recovery target):**
    
-/ask should use staged fallback behavior in local wiki, local chunk, and cloud paths: (1) clarify when query intent is ambiguous, (2) run one targeted re-query pass using signal-heavy query terms when grounding is weak/no-match, and (3) return explicit insufficient-evidence guidance if grounding remains weak after retry. This reduces attempts at weakly grounded answers while preserving actionable next-step prompts for users.
+Target behavior: /ask uses staged fallback behavior in local wiki, local chunk, and adapter-backed retrieval paths: (1) clarify when query intent is ambiguous, (2) run one targeted re-query pass using signal-heavy query terms when grounding is weak/no-match, and (3) return explicit insufficient-evidence guidance if grounding remains weak after retry. This reduces attempts at weakly grounded answers while preserving actionable next-step prompts for users.
     
 Additionally, add evaluation-set metrics for fallback-stage hit rates (clarify, requery, insufficient) to tune thresholds.

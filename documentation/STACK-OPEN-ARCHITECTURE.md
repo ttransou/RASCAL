@@ -46,10 +46,10 @@ These adapters should be optional and configured explicitly.
 ### 3. Enterprise Adapters
 
 Useful when governance, identity, managed hosting, or existing document systems require them:
-- Azure OpenAI or other approved hosted model providers
-- Azure Blob or other object storage
-- Cosmos DB, Azure AI Search, or other managed retrieval stores
-- Entra ID or other identity providers
+- approved hosted model providers
+- object storage services
+- managed retrieval/vector/graph stores
+- enterprise identity providers
 - SharePoint, Teams, Confluence, ServiceNow, or internal governed APIs
 
 Enterprise adapters should not leak into core imports or quick-start requirements.
@@ -76,4 +76,4 @@ Use:
 - no required cloud control plane
 - no required model vendor
 
-Avoid describing the framework baseline as Azure-centric, model-specific, or enterprise-only. It is accurate to say RASCAL began as an Azure-oriented experiment, but current framework direction is local-first and provider-open.
+Avoid describing the framework baseline as provider-centric, model-specific, or enterprise-only. It is accurate to say RASCAL began as a cloud-oriented experiment, but current framework direction is local-first and provider-open.

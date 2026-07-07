@@ -4,7 +4,7 @@
 T. Transou - June 2026 - 🚧 Active Development 🚧
 
 
-**Conceptual lineage:** This repo began as an Azure-stack iteration of Andrej Karpathy's LLM Wiki gist. It now keeps the same wiki-first grounding idea while moving toward a **local-first, provider-open framework**: the baseline runs on local files, local Markdown wiki output, local JSON artifacts, and deterministic retrieval, while cloud, model, vector, graph, and enterprise systems remain optional adapters. It is also directionally aligned with retrieval-and-structuring research, such as RAS (Retrieval-And-Structuring for Knowledge-Intensive LLM Generation), particularly in its emphasis on structured intermediate knowledge over flat passage-only retrieval.
+**Conceptual lineage:** This repo began as a cloud-oriented iteration of Andrej Karpathy's LLM Wiki gist. It now keeps the same wiki-first grounding idea while moving toward a **local-first, provider-open framework**: the baseline runs on local files, local Markdown wiki output, local JSON artifacts, and deterministic retrieval, while cloud, model, vector, graph, and enterprise systems remain optional adapters. It is also directionally aligned with retrieval-and-structuring research, such as RAS (Retrieval-And-Structuring for Knowledge-Intensive LLM Generation), particularly in its emphasis on structured intermediate knowledge over flat passage-only retrieval.
 
 RASCAL is a lightweight, wiki-first framework for building grounded assistants over **bounded, curated document corpora** with transparent retrieval and traceable citations.
 
@@ -20,7 +20,7 @@ RASCAL is a lightweight, wiki-first framework for building grounded assistants o
 - local API/frontend runtime through `backend/api.py` and `frontend/`
 - local feedback/write-back artifacts as the starter persistence model
 
-Provider integrations are allowed, but they are adapters rather than prerequisites. Useful open/local adapters may include SQLite or DuckDB for local persistence, Chroma/Qdrant/LanceDB for vector search, NetworkX or JSON graph files for graph exploration, Ollama/LM Studio/OpenAI-compatible local servers for optional synthesis, and GitHub/Obsidian/Google Drive export workflows for source movement. Enterprise adapters may include Azure OpenAI, Azure Blob, Cosmos DB, Entra ID, SharePoint, Teams, Confluence, or internal governed APIs.
+Provider integrations are allowed, but they are adapters rather than prerequisites. Useful open/local adapters may include SQLite or DuckDB for local persistence, Chroma/Qdrant/LanceDB for vector search, NetworkX or JSON graph files for graph exploration, Ollama/LM Studio/OpenAI-compatible local servers for optional synthesis, and GitHub/Obsidian/Google Drive export workflows for source movement. Enterprise adapters may include hosted model gateways, managed object storage, managed graph/vector/search services, identity providers, document systems, or internal governed APIs.
 
 **Customization by design:** you are not locked into predefined taxonomies or relationship types. For each corpus, you define the document types, relationship semantics, and metadata structures that reflect your domain's actual knowledge model. In short, JSON config files, not code. Whether you ingest policy/compliance documents, technical specifications, operational procedures, or the complete works of Seneca the Younger, the framework adapts to your ontology, not the other way around.
 
@@ -100,7 +100,7 @@ With that philosophy in mind, the next section clarifies explicit boundaries to 
 
 ## Out of Scope (To Avoid Confusion) 😖
 The implementation is intentionally bounded; it is not designed as a general agent framework or a general-purpose chatbot.
-- No required named model vendor: the local-first baseline does not require Claude, OpenAI, Azure OpenAI, or any hosted LLM. Model-backed synthesis can be added later through optional adapters.
+- No required named model vendor: the local-first baseline does not require any hosted LLM vendor. Model-backed synthesis can be added later through optional adapters.
 - No autonomous multi-agent orchestration: this is a single assistant, pipeline-driven system. The use of agents may be considered later, once the baseline MVP is proven and security concerns are analyzed.
 - No open-domain assistant behavior: responses are grounded in a bounded, curated corpus with traceability.
 - No chat-over-anything posture: ingestion and answer quality depend on structured artifacts plus human curation.
@@ -616,7 +616,7 @@ These are the core human-controlled inputs that make the framework reusable and 
 Pick one of these paths deliberately:
 - local-first path: fastest for pipeline and UX validation; uses files, Markdown, local API, and deterministic retrieval
 - open-tool path: use local or open services such as Ollama/LM Studio, SQLite/DuckDB, Chroma/Qdrant/LanceDB, or file/Git-based workflows when they fit your environment
-- enterprise adapter path: use Azure, SharePoint, Entra ID, Cosmos DB, or other governed services only when those controls are needed
+- enterprise adapter path: use governed identity, document systems, and managed stores only when those controls are needed
 Do not casually mix these paths in documentation or handoffs. Different teams will care about different prerequisites.
 
 **5. Align the Frontend to the Corpus**
@@ -684,7 +684,7 @@ If you have legacy payloads that expose `page_type`, treat them as compatibility
 The core idea is the same: build a wiki-shaped, grounded knowledge layer first, then answer questions from that curated representation instead of trating the model as the source of truth.
 
 This repo differs in a few important ways:
-- It is local-first and provider-open. The default runtime uses local files, Markdown, JSON artifacts, and deterministic retrieval; Azure and other cloud services are optional adapters.
+- It is local-first and provider-open. The default runtime uses local files, Markdown, JSON artifacts, and deterministic retrieval; cloud services are optional adapters.
 - It is not designed around any named model vendor or autonomous multi-agent orchestration. The runtime is a single-assistant, pipeline-driven retrieval-and-answer flow.
 - It uses an explicit extraction pipeline. Raw source documents are converted into structured JSON artifacts before wiki compilation, rather than assuming a single monolithic wiki-generation step.
 - It keeps a human curation layer in the loop; `metadata_overrides.json` and `config/source_url_map.json` are first-class parts of the workflow, not incidental extras.
@@ -758,6 +758,14 @@ source .venv/bin/activate    # macOS/Linux
 #install parser and local API dependencies
 pip install -r requirements.txt
 ```
+
+Environment reliability note:
+- Run backend Python commands from the project virtual environment to avoid missing-package errors.
+- Either activate `.venv` first (`source .venv/bin/activate`) or call Python explicitly:
+  - `/workspaces/RASCAL/.venv/bin/python backend/process_raw_sources.py raw --output-root backend/json`
+  - `/workspaces/RASCAL/.venv/bin/python backend/wiki_compiler.py raw --output-root backend/json --wiki-root backend/wiki`
+  - `/workspaces/RASCAL/.venv/bin/python backend/api.py`
+  - `/workspaces/RASCAL/.venv/bin/python backend/suggest_metadata.py --check-models`
 
 2) Add your source documents
 Place .doc, .pdf, etc in `raw/`
@@ -847,8 +855,8 @@ The local-first path above is the baseline. Provider adapters are optional exten
 Examples:
 - local/open model adapter: use Ollama, LM Studio, or another OpenAI-compatible local endpoint for optional synthesis
 - local persistence adapter: use SQLite, DuckDB, or file-backed JSONL for feedback, telemetry, and curator state
-- vector adapter: use Chroma, Qdrant, LanceDB, Azure AI Search, or another vector backend behind the retrieval boundary
-- graph adapter: use JSON graph files, NetworkX, Neo4j, Cosmos DB, or another graph-capable store behind the relationship boundary
+- vector adapter: use Chroma, Qdrant, LanceDB, or another vector backend behind the retrieval boundary
+- graph adapter: use JSON graph files, NetworkX, Neo4j, or another graph-capable store behind the relationship boundary
 - source-system adapter: sync from GitHub, Obsidian exports, Google Drive, SharePoint, Teams, Confluence, or another controlled source system
 
 Adapter rule: the framework core must still run without the adapter. If an integration requires credentials, cloud resources, enterprise identity, or a managed service, it belongs behind a provider-specific boundary and should not be required for the quick start.
@@ -867,31 +875,31 @@ Adapter rule: the framework core must still run without the adapter. If an integ
 
 | Endpoint | Description |
 | :---- | :---- |
-| `GET/` | Frontend shell |
-| `GET/index.html` | Frontend shell HTML |
-| `GET/styles.css` | Frontend stylesheet |
-| `GET/app.js` | Frontend app script |
-| `GET/graph_map.js` | Graph map script |
-| `GET/faq.json` | FAQ payload for UI |
-| `GET/graph-map` | Relationship map UI (currently templatized until corpus ingest) |
-| `GET/graph_map_data` | Graph nodes/edges payload for visualization (currently scaffolded example data) |
-| `GET/health` | Mode and service health |
-| `POST/ask` | Demo answer with trace-style payload |
-| `GET/wiki_index` | Wiki catalog for the documents sidebar |
-| `GET/wiki/{page_id}` | Single wiki page payload (dynamic route) |
-| `GET/feedback-review` | Curator space page |
-| `GET/feedback-data` | Read local feedback events with optional `status` and `rating` query filters |
-| `GET/triage_audit` | Read local triage actions derived from reviewed/proposed/resolved feedback events |
-| `GET/wiki_freshness` | Local wiki freshness summary based on page modification and review metadata |
-| `GET/lint/document` | Local wiki document lint summary for required structural fields |
-| `GET/cascade_status` | Local cascade status placeholder; reports unavailable with zero pending work |
-| `GET/query_telemetry_summary` | Local query/feedback term summary derived from feedback questions |
-| `GET/graph_analytics_summary` | Local graph node/edge summary derived from compiled wiki relationships |
-| `POST/feedback` | Record local feedback workflow event in `backend/feedback.jsonl` |
-| `POST/feedback-triage` | Update local feedback status, curator note, and optional linked wiki page |
-| `POST/feedback-propose-wiki` | Generate a Markdown wiki proposal draft from selected feedback events |
-| `POST/wiki_mark_reviewed` | Mark a local wiki page reviewed in `backend/wiki/review_metadata.json` |
-| `POST/wiki` | Create a Markdown wiki draft/analysis page and refresh the wiki index |
+| `GET /` | Frontend shell |
+| `GET /index.html` | Frontend shell HTML |
+| `GET /styles.css` | Frontend stylesheet |
+| `GET /app.js` | Frontend app script |
+| `GET /graph_map.js` | Graph map script |
+| `GET /faq.json` | FAQ payload for UI |
+| `GET /graph-map` | Relationship map UI |
+| `GET /graph_map_data` | Graph nodes/edges payload derived from compiled wiki relationships |
+| `GET /health` | Mode and service health |
+| `POST /ask` | Local wiki-grounded answer with trace payload |
+| `GET /wiki_index` | Wiki catalog for the documents sidebar |
+| `GET /wiki/{page_id}` | Single wiki page payload (dynamic route) |
+| `GET /feedback-review` | Curator space page |
+| `GET /feedback-data` | Read local feedback events with optional `status` and `rating` query filters |
+| `GET /triage_audit` | Read local triage actions derived from reviewed/proposed/resolved feedback events |
+| `GET /wiki_freshness` | Local wiki freshness summary based on page modification and review metadata |
+| `GET /lint/document` | Local wiki document lint summary for required structural fields |
+| `GET /cascade_status` | Local cascade status placeholder; reports unavailable with zero pending work |
+| `GET /query_telemetry_summary` | Local query/feedback term summary derived from feedback questions |
+| `GET /graph_analytics_summary` | Local graph node/edge summary derived from compiled wiki relationships |
+| `POST /feedback` | Record local feedback workflow event in `backend/feedback.jsonl` |
+| `POST /feedback-triage` | Update local feedback status, curator note, and optional linked wiki page |
+| `POST /feedback-propose-wiki` | Generate a Markdown wiki proposal draft from selected feedback events |
+| `POST /wiki_mark_reviewed` | Mark a local wiki page reviewed in `backend/wiki/review_metadata.json` |
+| `POST /wiki` | Create a Markdown wiki draft/analysis page and refresh the wiki index |
 
 Feedback status values currently supported by the local file-backed workflow are `new`, `reviewed`, `proposed_wiki`, and `resolved`. Feedback is operator workflow data, not canonical knowledge. Durable knowledge changes happen through explicit wiki write-back.
 
@@ -953,7 +961,7 @@ Framework-level frontend customizations are concentrated in:
 - `frontend/app.js` for category mapping, external document links, and wiki catalog rendering
 - `frontend/styles.css` for layout and visual treatment
 - `frontend/README.md` for the UI-specific extension guide
-At the moment, this map should be read as a template-based visualization layer. Because no real corpus has been ingested yet, the nodes and edges shown are scaffolded example relationships rather than live graph structures from source documents.
+The relationship map renders live nodes/edges from compiled wiki relationships when corpus content exists; with minimal or no relationship metadata, the map will appear sparse.
 
 
 ## Interaction Model (Important)
